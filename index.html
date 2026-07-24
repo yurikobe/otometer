@@ -123,7 +123,7 @@
   }
   .ring{
     position:absolute;
-    top:50%;
+    top:calc(50% + 5px);
     left:50%;
     width:calc(100% + 16px);
     height:calc(100% + 16px);
@@ -228,8 +228,8 @@
   let running = false;
 
   // 環境音（暗騒音）を無視するための設定
-  const GATE_MARGIN = 18;      // 暗騒音レベルにこの値を足したラインより下は無視
-  const MIN_GATE = 12;         // 最低でもこのレベル以下は無視
+  const GATE_MARGIN = 34;      // 暗騒音レベルにこの値を足したラインより下は無視
+  const MIN_GATE = 24;         // 最低でもこのレベル以下は無視
   let noiseFloor = new Array(NUM_BARS).fill(0);
   let calibrating = false;
   let calibrateFrames = 0;
@@ -275,7 +275,7 @@
       if(adjusted < 0) adjusted = 0;
       const maxPossible = 255 - gate;
       let level = maxPossible > 0 ? adjusted / maxPossible : 0;
-      level = Math.min(1, Math.pow(level, 0.65));
+      level = Math.min(1, Math.pow(level, 1.15));
 
       let onSegs = Math.round(level * SEGMENTS);
 
