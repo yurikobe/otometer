@@ -32,6 +32,7 @@
     display:flex;
     flex-direction:column;
     padding:22px 18px 26px;
+    position:relative;
   }
 
   .title{
@@ -139,11 +140,109 @@
     min-height:16px;
     padding-top:4px;
   }
+
+  .settings-btn{
+    position:absolute;
+    top:18px;
+    right:16px;
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,255,255,0.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    z-index:10;
+  }
+  .settings-btn svg{
+    width:20px;
+    height:20px;
+  }
+
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(60,45,35,0.35);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    padding:20px;
+  }
+  .modal-overlay.open{
+    display:flex;
+  }
+  .modal-card{
+    background:#fffaf3;
+    border-radius:24px;
+    padding:26px 22px 22px;
+    width:100%;
+    max-width:320px;
+    box-shadow:0 16px 40px rgba(0,0,0,0.25);
+  }
+  .modal-card h2{
+    margin:0 0 4px;
+    font-size:18px;
+    color:var(--ink);
+  }
+  .modal-card p.desc{
+    margin:0 0 18px;
+    font-size:12px;
+    color:var(--sub);
+  }
+  .sens-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:6px;
+  }
+  .sens-row input[type="range"]{
+    flex:1;
+    accent-color:var(--accent);
+  }
+  .sens-num{
+    width:52px;
+    padding:6px 4px;
+    text-align:center;
+    font-size:16px;
+    font-weight:bold;
+    color:var(--ink);
+    border:1px solid #e6dccd;
+    border-radius:10px;
+  }
+  .sens-labels{
+    display:flex;
+    justify-content:space-between;
+    font-size:10px;
+    color:var(--sub);
+    margin-bottom:20px;
+  }
+  .modal-close{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:14px;
+    background:var(--accent);
+    color:white;
+    font-size:14px;
+    font-weight:bold;
+    letter-spacing:1px;
+    cursor:pointer;
+  }
 </style>
 </head>
 <body>
 
 <div class="phone">
+  <button class="settings-btn" id="settingsBtn" aria-label="せってい">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="#8a7a6a" stroke-width="1.8"/>
+      <path d="M19.4 13.5c.04-.33.06-.66.06-1s-.02-.67-.06-1l1.9-1.48a.5.5 0 0 0 .12-.64l-1.8-3.12a.5.5 0 0 0-.6-.22l-2.24.9c-.47-.36-.98-.66-1.53-.88l-.34-2.38a.5.5 0 0 0-.5-.43h-3.6a.5.5 0 0 0-.5.43l-.34 2.38c-.55.22-1.06.52-1.53.88l-2.24-.9a.5.5 0 0 0-.6.22l-1.8 3.12a.5.5 0 0 0 .12.64l1.9 1.48c-.04.33-.06.66-.06 1s.02.67.06 1l-1.9 1.48a.5.5 0 0 0-.12.64l1.8 3.12c.13.22.4.31.6.22l2.24-.9c.47.36.98.66 1.53.88l.34 2.38c.05.25.26.43.5.43h3.6c.24 0 .45-.18.5-.43l.34-2.38c.55-.22 1.06-.52 1.53-.88l2.24.9c.2.09.47 0 .6-.22l1.8-3.12a.5.5 0 0 0-.12-.64l-1.9-1.48Z" stroke="#8a7a6a" stroke-width="1.4" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
   <div class="title">
     <h1><span class="oto">おと</span>メーター</h1>
   </div>
@@ -162,6 +261,22 @@
     </button>
     <div class="msg" id="msg"></div>
   </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <h2>マイクかんど</h2>
+      <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
+      <div class="sens-row">
+        <input type="range" id="sensRange" min="1" max="100" value="50">
+        <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
+      </div>
+      <div class="sens-labels">
+        <span>にぶい</span>
+        <span>びんかん</span>
+      </div>
+      <button class="modal-close" id="modalClose">とじる</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -171,6 +286,11 @@
   const barsContainer = document.getElementById('bars');
   const micBtn = document.getElementById('micBtn');
   const msg = document.getElementById('msg');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalClose = document.getElementById('modalClose');
+  const sensRange = document.getElementById('sensRange');
+  const sensNum = document.getElementById('sensNum');
 
   const minF = 80, maxF = 8000;
   const freqEdges = [];
@@ -230,19 +350,29 @@
   let audioCtx, analyser, source, stream, dataArray, rafId;
   let running = false;
 
-  // 環境音（暗騒音）を無視するための設定
-  const GATE_MARGIN = 34;      // 暗騒音レベルにこの値を足したラインより下は無視
-  const MIN_GATE = 24;         // 最低でもこのレベル以下は無視
+  // マイク感度（1〜100、大きいほど小さな音にも反応する）
+  let sensitivity = 50;
+  const GATE_MARGIN_AT_MIN = 70; // 感度1のときのしきい値（にぶい）
+  const GATE_MARGIN_AT_MAX = 5;  // 感度100のときのしきい値（びんかん）
+  const MIN_GATE_AT_MIN = 45;
+  const MIN_GATE_AT_MAX = 3;
+
+  function currentGate(){
+    const t = (sensitivity - 1) / 99; // 0(にぶい)〜1(びんかん)
+    return {
+      margin: GATE_MARGIN_AT_MIN + (GATE_MARGIN_AT_MAX - GATE_MARGIN_AT_MIN) * t,
+      min: MIN_GATE_AT_MIN + (MIN_GATE_AT_MAX - MIN_GATE_AT_MIN) * t
+    };
+  }
   let noiseFloor = new Array(NUM_BARS).fill(0);
   let calibrating = false;
   let calibrateFrames = 0;
   const CALIBRATE_TOTAL_FRAMES = 40; // 起動直後、約0.6〜0.7秒で周囲の音を測定
 
-  const peakHold = new Array(NUM_BARS).fill(0);
-  const peakTimer = new Array(NUM_BARS).fill(0);
-  const peakOpacity = new Array(NUM_BARS).fill(0);
-  const HOLD_FRAMES = 48;  // ピークがその場にとどまるフレーム数（約0.8秒）
-  const FADE_FRAMES = 48;  // その後ふわっと消えるまでのフレーム数（約0.8秒）
+  const peakLevel = new Array(NUM_BARS).fill(0);  // 0〜1、これまでの最大レベル
+  const peakTime = new Array(NUM_BARS).fill(0);   // そのピークに達した時刻
+  const HOLD_MS = 800;  // ピークがその場にとどまる時間
+  const FADE_MS = 800;  // その後ふわっと消えるまでの時間
   const bandAvgBuf = new Array(NUM_BARS).fill(0);
 
   function bandAverage(b){
@@ -274,44 +404,47 @@
       return;
     }
 
+    const now = performance.now();
+    const gate = currentGate();
+
     for(let b=0;b<NUM_BARS;b++){
       const raw = bandAverage(b);
-      const gate = Math.max(noiseFloor[b] + GATE_MARGIN, MIN_GATE);
-      let adjusted = raw - gate;
+      const gateLevel = Math.max(noiseFloor[b] + gate.margin, gate.min);
+      let adjusted = raw - gateLevel;
       if(adjusted < 0) adjusted = 0;
-      const maxPossible = 255 - gate;
+      const maxPossible = 255 - gateLevel;
       let level = maxPossible > 0 ? adjusted / maxPossible : 0;
       level = Math.min(1, Math.pow(level, 1.15));
 
       let onSegs = Math.round(level * SEGMENTS);
 
-      if(onSegs >= peakHold[b]){
-        peakHold[b] = onSegs;
-        peakTimer[b] = 0;
-        peakOpacity[b] = onSegs > 0 ? 1 : 0;
-      } else if(peakHold[b] > 0){
-        peakTimer[b]++;
-        if(peakTimer[b] > HOLD_FRAMES){
-          const fadeProgress = (peakTimer[b] - HOLD_FRAMES) / FADE_FRAMES;
-          peakOpacity[b] = Math.max(0, 1 - fadeProgress);
-          if(peakOpacity[b] <= 0){
-            peakHold[b] = onSegs;
-            peakTimer[b] = 0;
-          }
-        }
+      // ピーク位置は時間ベースで管理（フレーム落ちがあってもチカチカしない）
+      if(level >= peakLevel[b]){
+        peakLevel[b] = level;
+        peakTime[b] = now;
       }
+      const elapsed = now - peakTime[b];
+      let peakOpacityVal;
+      if(elapsed <= HOLD_MS){
+        peakOpacityVal = 1;
+      } else if(elapsed <= HOLD_MS + FADE_MS){
+        peakOpacityVal = 1 - (elapsed - HOLD_MS) / FADE_MS;
+      } else {
+        peakOpacityVal = 0;
+      }
+      const peakSeg = Math.round(peakLevel[b] * SEGMENTS) - 1;
 
       const segs = segEls[b];
       for(let s=0;s<SEGMENTS;s++){
         const seg = segs[s];
         const isOn = s < onSegs;
-        const isPeak = s === peakHold[b]-1 && peakHold[b] > onSegs && peakOpacity[b] > 0;
+        const isPeak = !isOn && s === peakSeg && peakSeg >= onSegs && peakOpacityVal > 0;
         if(isOn){
           seg.style.background = segColor(b, s);
           seg.style.opacity = '1';
         } else if(isPeak){
           seg.style.background = segColor(b, s);
-          seg.style.opacity = String(peakOpacity[b]);
+          seg.style.opacity = String(peakOpacityVal);
         } else {
           seg.style.background = '#f1ece6';
           seg.style.opacity = '1';
@@ -369,9 +502,8 @@
     if(stream){ stream.getTracks().forEach(t=>t.stop()); }
     if(audioCtx){ audioCtx.close(); }
     resetBars();
-    peakHold.fill(0);
-    peakTimer.fill(0);
-    peakOpacity.fill(0);
+    peakLevel.fill(0);
+    peakTime.fill(0);
     micBtn.classList.remove('on');
     micBtn.setAttribute('aria-label','マイクをはじめる');
   }
@@ -379,6 +511,31 @@
   micBtn.addEventListener('click', ()=>{
     if(running){ stop(); } else { start(); }
   });
+
+  function openModal(){
+    sensRange.value = String(sensitivity);
+    sensNum.value = String(sensitivity);
+    modalOverlay.classList.add('open');
+  }
+  function closeModal(){
+    modalOverlay.classList.remove('open');
+  }
+  function setSensitivity(v){
+    let n = parseInt(v, 10);
+    if(isNaN(n)) n = sensitivity;
+    n = Math.max(1, Math.min(100, n));
+    sensitivity = n;
+    sensRange.value = String(n);
+    sensNum.value = String(n);
+  }
+
+  settingsBtn.addEventListener('click', openModal);
+  modalClose.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e)=>{
+    if(e.target === modalOverlay) closeModal();
+  });
+  sensRange.addEventListener('input', ()=> setSensitivity(sensRange.value));
+  sensNum.addEventListener('input', ()=> setSensitivity(sensNum.value));
 
   resetBars();
 })();
