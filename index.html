@@ -178,17 +178,18 @@
     freqEdges.push(minF * Math.pow(maxF/minF, i/NUM_BARS));
   }
 
-  // 下から上へ5段階（緑→黄緑→黄→オレンジ→赤）、左のバーほど暗め・右のバーほど明るめ
+  // 下から上へ5段階（緑→黄緑→黄→オレンジ→赤）、左のバーほど黒が混ざり暗く・右のバーほど純色
   const LEVELS = 5;
   const LEVEL_HUE = [142, 84, 48, 28, 4];
   const LEVEL_SAT = [58, 62, 88, 88, 78];
   const LEVEL_LIGHT = [48, 54, 58, 58, 56];
-  const BRIGHTNESS_RANGE = 22; // 左端から右端でどれだけ明るくなるか(%)
+  const BLACK_MIX_MIN = 0.4; // 一番左のバーの明るさ倍率（1に近いほど黒が薄い）
 
   function segColor(barIndex, segIndexFromBottom){
     const level = Math.min(LEVELS-1, Math.floor(segIndexFromBottom / SEGMENTS * LEVELS));
-    const t = NUM_BARS > 1 ? barIndex / (NUM_BARS - 1) : 0;
-    const l = Math.min(88, LEVEL_LIGHT[level] + t * BRIGHTNESS_RANGE);
+    const t = NUM_BARS > 1 ? barIndex / (NUM_BARS - 1) : 1;
+    const mix = BLACK_MIX_MIN + (1 - BLACK_MIX_MIN) * t; // 左ほど小さい(黒寄り)、右で1(純色)
+    const l = LEVEL_LIGHT[level] * mix;
     return `hsl(${LEVEL_HUE[level]}, ${LEVEL_SAT[level]}%, ${l}%)`;
   }
 
