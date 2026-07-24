@@ -81,7 +81,7 @@
     flex:1;
     border-radius:6px;
     background:#f1ece6;
-    transition:background-color 90ms ease-out, opacity 90ms ease-out;
+    transition:background-color 90ms ease-out;
   }
 
   .controls{
@@ -184,8 +184,8 @@
   const LEVEL_HUE = [142, 84, 48, 28, 4];
   const LEVEL_SAT = [58, 62, 88, 88, 78];
   const LEVEL_LIGHT = [48, 54, 58, 58, 56];
-  const BLACK_MIX_MAX = 0.65; // 左端でどれだけ黒に寄せるか(0〜1)
-  const WHITE_MIX_MAX = 0.85; // 右端でどれだけ白に寄せるか(0〜1)
+  const BLACK_MIX_MAX = 0.4; // 左端でどれだけ黒に寄せるか(0〜1)
+  const WHITE_MIX_MAX = 0.4; // 右端でどれだけ白に寄せるか(0〜1)
 
   function segColor(barIndex, segIndexFromBottom){
     const level = Math.min(LEVELS-1, Math.floor(segIndexFromBottom / SEGMENTS * LEVELS));
@@ -241,8 +241,8 @@
   const peakHold = new Array(NUM_BARS).fill(0);
   const peakTimer = new Array(NUM_BARS).fill(0);
   const peakOpacity = new Array(NUM_BARS).fill(0);
-  const HOLD_FRAMES = 26;  // ピークがその場にとどまるフレーム数
-  const FADE_FRAMES = 20;  // その後ふわっと消えるまでのフレーム数
+  const HOLD_FRAMES = 48;  // ピークがその場にとどまるフレーム数（約0.8秒）
+  const FADE_FRAMES = 48;  // その後ふわっと消えるまでのフレーム数（約0.8秒）
   const bandAvgBuf = new Array(NUM_BARS).fill(0);
 
   function bandAverage(b){
