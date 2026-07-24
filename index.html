@@ -123,7 +123,11 @@
   }
   .ring{
     position:absolute;
-    inset:-8px;
+    top:50%;
+    left:50%;
+    width:calc(100% + 16px);
+    height:calc(100% + 16px);
+    transform:translate(-50%,-50%);
     border-radius:50%;
     border:3px solid #ff5c4c;
     opacity:0;
@@ -132,8 +136,8 @@
     animation:pulse 1.5s ease-out infinite;
   }
   @keyframes pulse{
-    0%{ opacity:0.6; transform:scale(1); }
-    100%{ opacity:0; transform:scale(1.35); }
+    0%{ opacity:0.6; transform:translate(-50%,-50%) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1.35); }
   }
 
   .msg{
@@ -182,7 +186,19 @@
     freqEdges.push(minF * Math.pow(maxF/minF, i/NUM_BARS));
   }
 
-  const candyColors = ['#7dd3c0','#7ec8f2','#8fb8f5','#c39cf0','#f09cd8','#f79ca8','#ffb27a','#ffd27a'];
+  // 下から上へ5段階（緑→黄緑→黄→オレンジ→赤）、左のバーほど暗め・右のバーほど明るめ
+  const LEVELS = 5;
+  const LEVEL_HUE = [142, 84, 48, 28, 4];
+  const LEVEL_SAT = [58, 62, 88, 88, 78];
+  const LEVEL_LIGHT = [48, 54, 58, 58, 56];
+  const BRIGHTNESS_RANGE = 22; // 左端から右端でどれだけ明るくなるか(%)
+
+  function segColor(barIndex, segIndexFromBottom){
+    const level = Math.min(LEVELS-1, Math.floor(segIndexFromBottom / SEGMENTS * LEVELS));
+    const t = NUM_BARS > 1 ? barIndex / (NUM_BARS - 1) : 0;
+    const l = Math.min(88, LEVEL_LIGHT[level] + t * BRIGHTNESS_RANGE);
+    return `hsl(${LEVEL_HUE[level]}, ${LEVEL_SAT[level]}%, ${l}%)`;
+  }
 
   const segEls = [];
   for(let b=0;b<NUM_BARS;b++){
@@ -197,12 +213,6 @@
     }
     barsContainer.appendChild(barEl);
     segEls.push(segs);
-  }
-
-  function segColor(barIndex, segIndexFromBottom){
-    const t = segIndexFromBottom / SEGMENTS; // 0 bottom -> 1 top
-    const baseHue = candyColors[barIndex % candyColors.length];
-    return baseHue;
   }
 
   function resetBars(){
@@ -281,17 +291,18 @@
       }
 
       const segs = segEls[b];
-      const color = candyColors[b % candyColors.length];
       for(let s=0;s<SEGMENTS;s++){
         const seg = segs[s];
         const isOn = s < onSegs;
         const isPeak = s === peakHold[b]-1 && peakHold[b] > onSegs;
         if(isOn){
+          const color = segColor(b, s);
           seg.style.background = color;
-          seg.style.boxShadow = `0 0 8px 1px ${color}99`;
+          seg.style.boxShadow = `0 0 8px 1px ${color}`;
         } else if(isPeak){
+          const color = segColor(b, s);
           seg.style.background = color;
-          seg.style.boxShadow = `0 0 6px 1px ${color}66`;
+          seg.style.boxShadow = `0 0 6px 1px ${color}`;
         } else {
           seg.style.background = '#f1ece6';
           seg.style.boxShadow = 'none';
@@ -331,7 +342,7 @@
     }catch(err){
       console.error(err);
       if(err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'){
-        msg.textContent = 'マイクを許可（きょか）してね';
+        msg.textContent = 'マイクをつかう じょうけんをOKにしてね';
       } else if(err.name === 'NotFoundError'){
         msg.textContent = 'マイクがみつからないよ';
       } else {
