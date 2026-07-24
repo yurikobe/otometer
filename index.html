@@ -2,230 +2,188 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LED グラフィックイコライザー</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>おとメーター</title>
 <style>
   :root{
-    --panel-top:#3a3a3d;
-    --panel-bottom:#242426;
-    --screw:#8c8c8f;
-    --led-off:#1a1f1a;
-    --amber:#ffb020;
+    --bg-top:#fff6e9;
+    --bg-bottom:#ffe3d0;
+    --card:#ffffff;
+    --ink:#5a4a3f;
+    --sub:#a8998c;
+    --accent:#ff8a5c;
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{
     margin:0;
     height:100%;
-    background:#0c0c0d;
-    font-family:'Courier New', 'MS Gothic', monospace;
+    font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;
+    background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
+    overflow:hidden;
+  }
+  body{
     display:flex;
     align-items:center;
     justify-content:center;
-    overflow:hidden;
   }
-  .rack{
-    width:min(96vw,820px);
-    background:linear-gradient(180deg,var(--panel-top),var(--panel-bottom));
-    border-radius:10px;
-    padding:22px 22px 16px;
-    box-shadow:
-      0 20px 50px rgba(0,0,0,0.6),
-      inset 0 1px 0 rgba(255,255,255,0.08),
-      inset 0 -2px 4px rgba(0,0,0,0.5);
-    position:relative;
-    border:1px solid #111;
-  }
-  .screw{
-    position:absolute;
-    width:10px;height:10px;
-    border-radius:50%;
-    background:radial-gradient(circle at 35% 35%, #cfcfd2, #6a6a6d 60%, #3a3a3c);
-    box-shadow:0 1px 2px rgba(0,0,0,0.6);
-  }
-  .screw::after{
-    content:'';
-    position:absolute;
-    top:50%;left:50%;
-    width:7px;height:1px;
-    background:#3a3a3c;
-    transform:translate(-50%,-50%) rotate(35deg);
-  }
-  .screw.tl{top:12px;left:12px;} .screw.tr{top:12px;right:12px;}
-  .screw.bl{bottom:12px;left:12px;} .screw.br{bottom:12px;right:12px;}
-
-  .header{
+  .phone{
+    width:100vw;
+    height:100vh;
     display:flex;
-    justify-content:space-between;
-    align-items:baseline;
-    padding:0 4px 14px;
-    border-bottom:1px solid rgba(255,255,255,0.06);
-    margin-bottom:14px;
-  }
-  .brand{
-    color:#d8d6ce;
-    font-size:13px;
-    letter-spacing:3px;
-    font-weight:bold;
-  }
-  .brand span{color:var(--amber);}
-  .model{
-    color:#8c8a82;
-    font-size:10px;
-    letter-spacing:2px;
+    flex-direction:column;
+    padding:22px 18px 26px;
   }
 
-  .display{
-    background:#050505;
-    border-radius:4px;
-    padding:16px 14px 8px;
-    box-shadow:inset 0 2px 8px rgba(0,0,0,0.9), inset 0 0 0 1px #000;
+  .title{
+    text-align:center;
+    margin:6px 0 16px;
+  }
+  .title h1{
+    margin:0;
+    font-size:30px;
+    font-weight:900;
+    color:var(--ink);
+    letter-spacing:2px;
+    text-shadow:2px 2px 0 rgba(255,255,255,0.7);
+  }
+  .title h1 .oto{
+    color:var(--accent);
+  }
+
+  .card{
+    flex:1;
+    background:var(--card);
+    border-radius:32px;
+    padding:22px 18px;
+    box-shadow:0 12px 30px rgba(200,150,110,0.25);
+    display:flex;
+    flex-direction:column;
+    min-height:0;
   }
 
   .bars{
+    flex:1;
     display:flex;
     align-items:flex-end;
     justify-content:space-between;
-    gap:3px;
-    height:220px;
+    gap:5px;
+    min-height:0;
   }
   .bar{
     flex:1;
     height:100%;
     display:flex;
     flex-direction:column-reverse;
-    gap:2px;
+    gap:4px;
   }
   .seg{
     width:100%;
     flex:1;
-    border-radius:1px;
-    background:var(--led-off);
-    transition:background-color 60ms linear, box-shadow 60ms linear;
-  }
-
-  .freqlabels{
-    display:flex;
-    justify-content:space-between;
-    padding:8px 2px 0;
-  }
-  .freqlabels span{
-    color:#6b6a63;
-    font-size:9px;
-    letter-spacing:0.5px;
+    border-radius:6px;
+    background:#f1ece6;
+    transition:background-color 90ms ease-out, box-shadow 90ms ease-out, transform 90ms ease-out;
   }
 
   .controls{
     display:flex;
+    flex-direction:column;
     align-items:center;
-    justify-content:space-between;
-    margin-top:16px;
-    padding:0 4px;
-  }
-  .status{
-    color:#8c8a82;
-    font-size:11px;
-    letter-spacing:1px;
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .dot{
-    width:8px;height:8px;border-radius:50%;
-    background:#3a3a3c;
-    box-shadow:0 0 0 rgba(255,60,40,0);
-  }
-  .dot.live{
-    background:#ff3c28;
-    box-shadow:0 0 8px 2px rgba(255,60,40,0.7);
-    animation:pulse 1.4s ease-in-out infinite;
-  }
-  @keyframes pulse{
-    0%,100%{opacity:1;}
-    50%{opacity:0.5;}
+    gap:10px;
+    padding-top:22px;
   }
 
-  button{
-    font-family:inherit;
-    letter-spacing:2px;
-    font-size:12px;
-    font-weight:bold;
-    padding:10px 22px;
-    border-radius:5px;
-    border:1px solid #000;
+  .mic-btn{
+    width:68px;
+    height:68px;
+    border-radius:50%;
+    border:none;
+    background:linear-gradient(180deg,#8adfa0,#4fc97c);
+    box-shadow:0 6px 0 #2fa25a, 0 8px 16px rgba(79,201,124,0.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
     cursor:pointer;
-    background:linear-gradient(180deg,#4a4a4d,#2c2c2e);
-    color:#e6e4dc;
-    box-shadow:0 2px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+    transition:transform 90ms ease-out, box-shadow 90ms ease-out, background 200ms;
+    position:relative;
   }
-  button:active{
-    box-shadow:inset 0 2px 4px rgba(0,0,0,0.6);
-    transform:translateY(1px);
+  .mic-btn:active{
+    transform:translateY(5px);
+    box-shadow:0 1px 0 #2fa25a, 0 3px 8px rgba(79,201,124,0.4);
   }
-  button.on{
-    background:linear-gradient(180deg,#b8460f,#7a2c08);
-    color:#ffe6cc;
+  .mic-btn.on{
+    background:linear-gradient(180deg,#ff8a7a,#ff5c4c);
+    box-shadow:0 6px 0 #d43f30, 0 8px 16px rgba(255,92,76,0.4);
   }
-  button:disabled{
-    opacity:0.5;
-    cursor:not-allowed;
+  .mic-btn.on:active{
+    box-shadow:0 1px 0 #d43f30, 0 3px 8px rgba(255,92,76,0.4);
+  }
+  .mic-btn svg{
+    width:30px;
+    height:30px;
+  }
+  .ring{
+    position:absolute;
+    inset:-8px;
+    border-radius:50%;
+    border:3px solid #ff5c4c;
+    opacity:0;
+  }
+  .mic-btn.on .ring{
+    animation:pulse 1.5s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{ opacity:0.6; transform:scale(1); }
+    100%{ opacity:0; transform:scale(1.35); }
   }
 
   .msg{
-    color:#c98a4a;
-    font-size:11px;
+    color:#e0724a;
+    font-size:12px;
     text-align:center;
-    margin-top:10px;
-    min-height:14px;
-    letter-spacing:0.5px;
+    min-height:16px;
+    padding-top:4px;
   }
 </style>
 </head>
 <body>
 
-<div class="rack">
-  <div class="screw tl"></div><div class="screw tr"></div>
-  <div class="screw bl"></div><div class="screw br"></div>
-
-  <div class="header">
-    <div class="brand">GRAPHIC<span>EQ</span></div>
-    <div class="model">MIC INPUT ANALYZER</div>
+<div class="phone">
+  <div class="title">
+    <h1><span class="oto">おと</span>メーター</h1>
   </div>
 
-  <div class="display">
+  <div class="card">
     <div class="bars" id="bars"></div>
-    <div class="freqlabels" id="labels"></div>
   </div>
 
   <div class="controls">
-    <div class="status">
-      <div class="dot" id="dot"></div>
-      <span id="statusText">STANDBY</span>
-    </div>
-    <button id="toggleBtn">MIC START</button>
+    <button class="mic-btn" id="micBtn" aria-label="マイクをはじめる">
+      <div class="ring"></div>
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Z" fill="white"/>
+        <path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.08A7 7 0 0 0 19 11Z" fill="white"/>
+      </svg>
+    </button>
+    <div class="msg" id="msg"></div>
   </div>
-  <div class="msg" id="msg"></div>
 </div>
 
 <script>
 (function(){
-  const NUM_BARS = 24;
-  const SEGMENTS = 18;
+  const NUM_BARS = 14;
+  const SEGMENTS = 16;
   const barsContainer = document.getElementById('bars');
-  const labelsContainer = document.getElementById('labels');
-  const toggleBtn = document.getElementById('toggleBtn');
-  const statusText = document.getElementById('statusText');
-  const dot = document.getElementById('dot');
+  const micBtn = document.getElementById('micBtn');
   const msg = document.getElementById('msg');
 
-  // 音楽的に意味のある周波数帯（対数配置）
+  const minF = 80, maxF = 8000;
   const freqEdges = [];
-  const minF = 60, maxF = 12000;
   for(let i=0;i<=NUM_BARS;i++){
     freqEdges.push(minF * Math.pow(maxF/minF, i/NUM_BARS));
   }
-  const labelIdx = [0,4,8,12,16,20,23];
 
-  // バーとセグメントのDOM生成
+  const candyColors = ['#7dd3c0','#7ec8f2','#8fb8f5','#c39cf0','#f09cd8','#f79ca8','#ffb27a','#ffd27a'];
+
   const segEls = [];
   for(let b=0;b<NUM_BARS;b++){
     const barEl = document.createElement('div');
@@ -239,56 +197,75 @@
     }
     barsContainer.appendChild(barEl);
     segEls.push(segs);
-
-    if(labelIdx.includes(b)){
-      const lab = document.createElement('span');
-      const f = freqEdges[b];
-      lab.textContent = f >= 1000 ? (f/1000).toFixed(1)+'k' : Math.round(f);
-      labelsContainer.appendChild(lab);
-    } else if(b % 4 !== 0){
-      // spacing filler for alignment (invisible)
-    }
   }
-  // ensure label row has NUM_BARS-consistent spacing by adding blanks where not added
-  // (simple approach: labels only at labelIdx, flex justify handles spacing)
 
-  let audioCtx, analyser, source, stream, dataArray, rafId;
-  let running = false;
-
-  function segColor(segIndexFromBottom, totalOn){
-    // segIndexFromBottom: 0 = 最下段
-    const ratio = segIndexFromBottom / SEGMENTS;
-    if(ratio > 0.85) return {bg:'#ff3b30', glow:'rgba(255,59,48,0.85)'};
-    if(ratio > 0.65) return {bg:'#ffb020', glow:'rgba(255,176,32,0.8)'};
-    return {bg:'#3ddc61', glow:'rgba(61,220,97,0.75)'};
+  function segColor(barIndex, segIndexFromBottom){
+    const t = segIndexFromBottom / SEGMENTS; // 0 bottom -> 1 top
+    const baseHue = candyColors[barIndex % candyColors.length];
+    return baseHue;
   }
 
   function resetBars(){
     segEls.forEach(segs=>{
       segs.forEach(seg=>{
-        seg.style.background = 'var(--led-off)';
+        seg.style.background = '#f1ece6';
         seg.style.boxShadow = 'none';
       });
     });
   }
 
+  let audioCtx, analyser, source, stream, dataArray, rafId;
+  let running = false;
+
+  // 環境音（暗騒音）を無視するための設定
+  const GATE_MARGIN = 18;      // 暗騒音レベルにこの値を足したラインより下は無視
+  const MIN_GATE = 12;         // 最低でもこのレベル以下は無視
+  let noiseFloor = new Array(NUM_BARS).fill(0);
+  let calibrating = false;
+  let calibrateFrames = 0;
+  const CALIBRATE_TOTAL_FRAMES = 40; // 起動直後、約0.6〜0.7秒で周囲の音を測定
+
   const peakHold = new Array(NUM_BARS).fill(0);
   const peakDecay = new Array(NUM_BARS).fill(0);
+  const bandAvgBuf = new Array(NUM_BARS).fill(0);
+
+  function bandAverage(b){
+    const nyquist = audioCtx.sampleRate / 2;
+    const binHz = nyquist / dataArray.length;
+    const f0 = freqEdges[b], f1 = freqEdges[b+1];
+    const i0 = Math.max(0, Math.floor(f0/binHz));
+    const i1 = Math.min(dataArray.length-1, Math.ceil(f1/binHz));
+    let sum=0, count=0;
+    for(let i=i0;i<=i1;i++){ sum += dataArray[i]; count++; }
+    return count>0 ? sum/count : 0;
+  }
 
   function draw(){
     analyser.getByteFrequencyData(dataArray);
-    const nyquist = audioCtx.sampleRate / 2;
-    const binHz = nyquist / dataArray.length;
+
+    if(calibrating){
+      for(let b=0;b<NUM_BARS;b++){
+        noiseFloor[b] += bandAverage(b);
+      }
+      calibrateFrames++;
+      if(calibrateFrames >= CALIBRATE_TOTAL_FRAMES){
+        for(let b=0;b<NUM_BARS;b++){
+          noiseFloor[b] = noiseFloor[b] / CALIBRATE_TOTAL_FRAMES;
+        }
+        calibrating = false;
+      }
+      rafId = requestAnimationFrame(draw);
+      return;
+    }
 
     for(let b=0;b<NUM_BARS;b++){
-      const f0 = freqEdges[b], f1 = freqEdges[b+1];
-      const i0 = Math.max(0, Math.floor(f0/binHz));
-      const i1 = Math.min(dataArray.length-1, Math.ceil(f1/binHz));
-      let sum=0, count=0;
-      for(let i=i0;i<=i1;i++){ sum += dataArray[i]; count++; }
-      const avg = count>0 ? sum/count : 0;
-      let level = avg/255; // 0..1
-      level = Math.pow(level, 0.7); // 視覚的に持ち上げる
+      const raw = bandAverage(b);
+      const gate = Math.max(noiseFloor[b] + GATE_MARGIN, MIN_GATE);
+      let adjusted = raw - gate;
+      if(adjusted < 0) adjusted = 0;
+      const maxPossible = 255 - gate;
+      let level = maxPossible > 0 ? adjusted / maxPossible : 0;
+      level = Math.min(1, Math.pow(level, 0.65));
 
       let onSegs = Math.round(level * SEGMENTS);
 
@@ -304,16 +281,19 @@
       }
 
       const segs = segEls[b];
+      const color = candyColors[b % candyColors.length];
       for(let s=0;s<SEGMENTS;s++){
         const seg = segs[s];
         const isOn = s < onSegs;
         const isPeak = s === peakHold[b]-1 && peakHold[b] > onSegs;
-        if(isOn || isPeak){
-          const c = segColor(s, SEGMENTS);
-          seg.style.background = c.bg;
-          seg.style.boxShadow = `0 0 6px 1px ${c.glow}`;
+        if(isOn){
+          seg.style.background = color;
+          seg.style.boxShadow = `0 0 8px 1px ${color}99`;
+        } else if(isPeak){
+          seg.style.background = color;
+          seg.style.boxShadow = `0 0 6px 1px ${color}66`;
         } else {
-          seg.style.background = 'var(--led-off)';
+          seg.style.background = '#f1ece6';
           seg.style.boxShadow = 'none';
         }
       }
@@ -323,54 +303,59 @@
 
   async function start(){
     msg.textContent = '';
-    toggleBtn.disabled = true;
+    micBtn.disabled = true;
     try{
-      stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio:{
+          echoCancellation:true,
+          noiseSuppression:true,
+          autoGainControl:true
+        }
+      });
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if(audioCtx.state === 'suspended'){ await audioCtx.resume(); }
       source = audioCtx.createMediaStreamSource(stream);
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = 2048;
-      analyser.smoothingTimeConstant = 0.75;
+      analyser.smoothingTimeConstant = 0.7;
       source.connect(analyser);
       dataArray = new Uint8Array(analyser.frequencyBinCount);
 
       running = true;
-      toggleBtn.textContent = 'MIC STOP';
-      toggleBtn.classList.add('on');
-      statusText.textContent = 'LIVE';
-      dot.classList.add('live');
+      calibrating = true;
+      calibrateFrames = 0;
+      noiseFloor.fill(0);
+      micBtn.classList.add('on');
+      micBtn.setAttribute('aria-label','マイクをとめる');
       draw();
     }catch(err){
       console.error(err);
       if(err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'){
-        msg.textContent = 'マイクへのアクセスが拒否されました。ブラウザの設定で許可してください。';
+        msg.textContent = 'マイクを許可（きょか）してね';
       } else if(err.name === 'NotFoundError'){
-        msg.textContent = 'マイクが見つかりません。デバイスを確認してください。';
+        msg.textContent = 'マイクがみつからないよ';
       } else {
-        msg.textContent = 'マイクを起動できませんでした: ' + err.message;
+        msg.textContent = 'マイクをおこせなかったよ: ' + err.message;
       }
-      statusText.textContent = 'ERROR';
     } finally {
-      toggleBtn.disabled = false;
+      micBtn.disabled = false;
     }
   }
 
   function stop(){
     running = false;
+    calibrating = false;
     if(rafId) cancelAnimationFrame(rafId);
     if(stream){ stream.getTracks().forEach(t=>t.stop()); }
     if(audioCtx){ audioCtx.close(); }
     resetBars();
     peakHold.fill(0);
     peakDecay.fill(0);
-    toggleBtn.textContent = 'MIC START';
-    toggleBtn.classList.remove('on');
-    statusText.textContent = 'STANDBY';
-    dot.classList.remove('live');
+    micBtn.classList.remove('on');
+    micBtn.setAttribute('aria-label','マイクをはじめる');
   }
 
-  toggleBtn.addEventListener('click', ()=>{
+  micBtn.addEventListener('click', ()=>{
     if(running){ stop(); } else { start(); }
   });
 
