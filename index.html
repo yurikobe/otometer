@@ -466,7 +466,10 @@
           // 透明度で重ねるのではなく、色そのものを消灯色へ直接ブレンドする
           // （opacityで消すと背後の要素が透けて一瞬白っぽく見えるため）
           const vivid = segColor(b, s);
-          seg.style.background = `color-mix(in srgb, ${vivid} ${Math.round(peakOpacityVal*100)}%, ${OFF_COLOR})`;
+          const pct = Math.round(peakOpacityVal*100);
+          seg.style.background = pct <= 1
+            ? OFF_COLOR
+            : `color-mix(in oklab, ${vivid} ${pct}%, ${OFF_COLOR})`;
           seg.style.opacity = '1';
         } else {
           seg.style.background = '#f1ece6';
