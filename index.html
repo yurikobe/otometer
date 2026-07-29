@@ -82,7 +82,6 @@
     flex:1;
     border-radius:6px;
     background:#f1ece6;
-    transition:background-color 90ms ease-out;
   }
 
   .controls{
@@ -192,25 +191,31 @@
     font-size:12px;
     color:var(--sub);
   }
-  .sens-row{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:6px;
-  }
-  .sens-row input[type="range"]{
-    flex:1;
-    accent-color:var(--accent);
+  .sens-value-row{
+    text-align:center;
+    margin-bottom:8px;
   }
   .sens-num{
-    width:52px;
-    padding:6px 4px;
+    width:90px;
+    padding:2px 4px;
     text-align:center;
-    font-size:16px;
-    font-weight:bold;
-    color:var(--ink);
-    border:1px solid #e6dccd;
-    border-radius:10px;
+    font-size:34px;
+    font-weight:900;
+    color:var(--accent);
+    border:none;
+    background:transparent;
+    -moz-appearance:textfield;
+  }
+  .sens-num::-webkit-outer-spin-button,
+  .sens-num::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  .sens-range-full{
+    display:block;
+    width:100%;
+    margin-bottom:8px;
+    accent-color:var(--accent);
   }
   .sens-labels{
     display:flex;
@@ -264,12 +269,12 @@
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-card">
-      <h2>マイクかんど</h2>
+      <h2>マイク感度</h2>
       <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
-      <div class="sens-row">
-        <input type="range" id="sensRange" min="1" max="100" value="50">
+      <div class="sens-value-row">
         <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
       </div>
+      <input type="range" id="sensRange" class="sens-range-full" min="1" max="100" value="50">
       <div class="sens-labels">
         <span>にぶい</span>
         <span>びんかん</span>
@@ -419,7 +424,10 @@
       let onSegs = Math.round(level * SEGMENTS);
 
       // ピーク位置は時間ベースで管理（フレーム落ちがあってもチカチカしない）
-      if(level >= peakLevel[b]){
+      // フェードが完了したら基準をリセットして、次の（前回より小さい）音のピークも拾えるようにする
+      const prevElapsed = now - peakTime[b];
+      const prevFaded = prevElapsed > HOLD_MS + FADE_MS;
+      if(level >= peakLevel[b] || prevFaded){
         peakLevel[b] = level;
         peakTime[b] = now;
       }
