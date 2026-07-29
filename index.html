@@ -328,6 +328,7 @@
     return `hsl(${LEVEL_HUE[level]}, ${LEVEL_SAT[level]}%, ${l}%)`;
   }
 
+  const OFF_COLOR = '#f1ece6';
   const segEls = [];
   for(let b=0;b<NUM_BARS;b++){
     const barEl = document.createElement('div');
@@ -451,8 +452,11 @@
           seg.style.background = segColor(b, s);
           seg.style.opacity = '1';
         } else if(isPeak){
-          seg.style.background = segColor(b, s);
-          seg.style.opacity = String(peakOpacityVal);
+          // 透明度で重ねるのではなく、色そのものを消灯色へ直接ブレンドする
+          // （opacityで消すと背後の要素が透けて一瞬白っぽく見えるため）
+          const vivid = segColor(b, s);
+          seg.style.background = `color-mix(in srgb, ${vivid} ${Math.round(peakOpacityVal*100)}%, ${OFF_COLOR})`;
+          seg.style.opacity = '1';
         } else {
           seg.style.background = '#f1ece6';
           seg.style.opacity = '1';
