@@ -371,6 +371,8 @@
     };
   }
   let noiseFloor = new Array(NUM_BARS).fill(0);
+  const smoothLevel = new Array(NUM_BARS).fill(0); // 立ち上がり速・下降ゆっくりの平滑化用
+  const RELEASE = 0.25; // 下降時の追従の速さ（小さいほどゆっくり）
   let calibrating = false;
   let calibrateFrames = 0;
   const CALIBRATE_TOTAL_FRAMES = 40; // 起動直後、約0.6〜0.7秒で周囲の音を測定
@@ -421,6 +423,15 @@
       const maxPossible = 255 - gateLevel;
       let level = maxPossible > 0 ? adjusted / maxPossible : 0;
       level = Math.min(1, Math.pow(level, 1.15));
+
+      // 立ち上がりは即座に、下がるときはゆっくり追従させて、
+      // 無音付近での微小なジッター（チカチカの原因）を吸収する
+      if(level > smoothLevel[b]){
+        smoothLevel[b] = level;
+      } else {
+        smoothLevel[b] += (level - smoothLevel[b]) * RELEASE;
+      }
+      level = smoothLevel[b];
 
       let onSegs = Math.round(level * SEGMENTS);
 
@@ -490,6 +501,7 @@
       calibrating = true;
       calibrateFrames = 0;
       noiseFloor.fill(0);
+      smoothLevel.fill(0);
       micBtn.classList.add('on');
       micBtn.setAttribute('aria-label','マイクをとめる');
       draw();
@@ -516,6 +528,7 @@
     resetBars();
     peakLevel.fill(0);
     peakTime.fill(0);
+    smoothLevel.fill(0);
     micBtn.classList.remove('on');
     micBtn.setAttribute('aria-label','マイクをはじめる');
   }
