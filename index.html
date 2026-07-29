@@ -362,12 +362,15 @@
   const GATE_MARGIN_AT_MAX = 5;  // 感度100のときのしきい値（びんかん）
   const MIN_GATE_AT_MIN = 45;
   const MIN_GATE_AT_MAX = 3;
+  const GAIN_AT_MIN = 0.55;      // 感度1のときの増幅率（ふつうの声でも上がりにくい）
+  const GAIN_AT_MAX = 2.0;       // 感度100のときの増幅率（ふつうの声でもよく上がる）
 
   function currentGate(){
     const t = (sensitivity - 1) / 99; // 0(にぶい)〜1(びんかん)
     return {
       margin: GATE_MARGIN_AT_MIN + (GATE_MARGIN_AT_MAX - GATE_MARGIN_AT_MIN) * t,
-      min: MIN_GATE_AT_MIN + (MIN_GATE_AT_MAX - MIN_GATE_AT_MIN) * t
+      min: MIN_GATE_AT_MIN + (MIN_GATE_AT_MAX - MIN_GATE_AT_MIN) * t,
+      gain: GAIN_AT_MIN + (GAIN_AT_MAX - GAIN_AT_MIN) * t
     };
   }
   let noiseFloor = new Array(NUM_BARS).fill(0);
@@ -422,6 +425,7 @@
       if(adjusted < 0) adjusted = 0;
       const maxPossible = 255 - gateLevel;
       let level = maxPossible > 0 ? adjusted / maxPossible : 0;
+      level = Math.min(1, level * gate.gain);
       level = Math.min(1, Math.pow(level, 1.15));
 
       // 立ち上がりは即座に、下がるときはゆっくり追従させて、
