@@ -184,11 +184,13 @@
     z-index: 200;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.4s ease;
+    /* 発火時はパッと表示、終了時は1.0sかけてフェードアウト */
+    transition: opacity 1.0s ease-out;
     overflow: hidden;
   }
   .celebration-overlay.active {
     opacity: 1;
+    transition: opacity 0.2s ease-in;
   }
 
   /* 虹色背景（アルファ値 0.6） */
@@ -205,47 +207,38 @@
       rgba(155, 89, 182, 0.6),
       rgba(255, 71, 87, 0.6)
     );
-    animation: rotateBg 2.5s linear infinite, flashBg 0.4s ease-in-out infinite alternate;
+    animation: rotateBg 3s linear infinite;
   }
   @keyframes rotateBg {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-  @keyframes flashBg {
-    0% { opacity: 0.75; }
-    100% { opacity: 1; }
-  }
 
-  /* 下からゆっくり吹き出し画面外へ消える紙吹雪 */
+  /* 紙吹雪コンテナ */
   .confetti-container {
     position: absolute;
     inset: 0;
     z-index: 201;
-    perspective: 1000px;
+    perspective: 800px;
   }
   .confetti-piece {
     position: absolute;
-    bottom: -30px;
-    width: 14px;
-    height: 22px;
-    border-radius: 3px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-    /* 一定の滑らかな動き（ease-out）で止まらず通り抜ける */
-    animation: burstUpSlow forwards ease-out;
+    bottom: -10vh;
+    width: 12px;
+    height: 20px;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* 止まることなくスムーズに上へ通り抜けるイージング */
+    animation: burstUpContinuous forwards cubic-bezier(0.15, 0.85, 0.35, 1);
   }
 
-  @keyframes burstUpSlow {
+  @keyframes burstUpContinuous {
     0% {
-      transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.6);
-      opacity: 1;
-    }
-    75% {
-      opacity: 1;
+      transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
     }
     100% {
-      /* 画面上部を完全に突き抜ける(-125vh〜-150vh) */
-      transform: translateY(var(--ty)) translateX(var(--tx)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) scale(1);
-      opacity: 0;
+      /* 画面上部を完全に突き抜けてフレームアウトする */
+      transform: translateY(var(--ty)) translateX(var(--tx)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));
     }
   }
 
@@ -492,7 +485,7 @@
 
   function createConfettiBatch(){
     const colors = ['#ff4757', '#ffa502', '#ffea65', '#2ed573', '#1e90ff', '#9b59b6', '#ffffff'];
-    const pieceCount = 45;
+    const pieceCount = 50;
 
     for(let i=0; i<pieceCount; i++){
       const piece = document.createElement('div');
@@ -501,11 +494,11 @@
       piece.style.left = (Math.random() * 100) + '%';
       piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
 
-      // 画面上部を余裕を持って突き抜ける距離（-120vh 〜 -160vh）
-      const ty = -(Math.random() * 40 + 120) + 'vh';
-      const tx = (Math.random() * 260 - 130) + 'px'; 
-      const rx = (Math.random() * 1800 - 900) + 'deg';
-      const ry = (Math.random() * 1800 - 900) + 'deg';
+      // 画面上部を確実に突っ切る高さ（-110vh〜-140vh）
+      const ty = -(Math.random() * 30 + 110) + 'vh';
+      const tx = (Math.random() * 200 - 100) + 'px'; 
+      const rx = (Math.random() * 1400 - 700) + 'deg';
+      const ry = (Math.random() * 1400 - 700) + 'deg';
       const rz = (Math.random() * 720 - 360) + 'deg';
 
       piece.style.setProperty('--ty', ty);
@@ -514,16 +507,16 @@
       piece.style.setProperty('--ry', ry);
       piece.style.setProperty('--rz', rz);
 
-      // 時間を伸ばしてゆったり動かす（3.5s 〜 4.8s）
-      piece.style.animationDelay = (Math.random() * 0.3) + 's';
-      piece.style.animationDuration = (3.5 + Math.random() * 1.3) + 's';
+      // 少しバラつきをつけて連続的に舞い上がる（1.8秒〜2.5秒）
+      piece.style.animationDelay = (Math.random() * 0.25) + 's';
+      piece.style.animationDuration = (1.8 + Math.random() * 0.7) + 's';
 
       confettiContainer.appendChild(piece);
     }
   }
 
   function triggerCelebration(){
-    // 画面をアクティブにする
+    // 画面を表示状態にする
     celebrationOverlay.classList.add('active');
 
     if(!isCelebrating){
@@ -531,25 +524,23 @@
       confettiContainer.innerHTML = '';
       createConfettiBatch();
     } else {
-      // 連続発火時は追加入れ替え
       createConfettiBatch();
     }
 
-    // 既存の消去タイマーがあればクリアして「最後の発火から3秒」に更新
     if(celebrationTimer) clearTimeout(celebrationTimer);
     if(retriggerTimer) clearTimeout(retriggerTimer);
 
-    // 2秒経過したら次の再発火を受け付ける
+    // 1.5秒間は連打再発火をガード
     retriggerTimer = setTimeout(()=>{
       isCelebrating = false;
-    }, 2000);
+    }, 1500);
 
-    // 最後の発火からピッタリ3秒後に消える
+    // 最後の発火から1.5秒経過後にフェードアウトを開始し、2.5秒で完全終了
     celebrationTimer = setTimeout(()=>{
       celebrationOverlay.classList.remove('active');
       isCelebrating = false;
-      setTimeout(()=>{ confettiContainer.innerHTML = ''; }, 400);
-    }, 3000);
+      setTimeout(()=>{ confettiContainer.innerHTML = ''; }, 1000);
+    }, 1500);
   }
 
   function bandAverage(b){
