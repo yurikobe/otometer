@@ -184,39 +184,39 @@
     z-index: 200;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
     overflow: hidden;
   }
   .celebration-overlay.active {
     opacity: 1;
   }
 
-  /* 濃いめの虹色背景 */
+  /* 虹色背景（アルファ値 0.6） */
   .rainbow-bg {
     position: absolute;
     inset: -50%;
     background: conic-gradient(
       from 0deg,
-      rgba(255, 71, 87, 0.8),
-      rgba(255, 165, 2, 0.8),
-      rgba(255, 234, 167, 0.85),
-      rgba(46, 213, 115, 0.8),
-      rgba(30, 144, 255, 0.8),
-      rgba(155, 89, 182, 0.8),
-      rgba(255, 71, 87, 0.8)
+      rgba(255, 71, 87, 0.6),
+      rgba(255, 165, 2, 0.6),
+      rgba(255, 234, 167, 0.6),
+      rgba(46, 213, 115, 0.6),
+      rgba(30, 144, 255, 0.6),
+      rgba(155, 89, 182, 0.6),
+      rgba(255, 71, 87, 0.6)
     );
-    animation: rotateBg 2s linear infinite, flashBg 0.3s ease-in-out infinite alternate;
+    animation: rotateBg 2.5s linear infinite, flashBg 0.4s ease-in-out infinite alternate;
   }
   @keyframes rotateBg {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
   @keyframes flashBg {
-    0% { opacity: 0.7; }
+    0% { opacity: 0.75; }
     100% { opacity: 1; }
   }
 
-  /* 下から吹き出す紙吹雪 */
+  /* 下からゆっくり吹き出し画面外へ消える紙吹雪 */
   .confetti-container {
     position: absolute;
     inset: 0;
@@ -225,24 +225,26 @@
   }
   .confetti-piece {
     position: absolute;
-    bottom: -20px;
+    bottom: -30px;
     width: 14px;
     height: 22px;
     border-radius: 3px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-    animation: burstUp 2.8s cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
+    /* 一定の滑らかな動き（ease-out）で止まらず通り抜ける */
+    animation: burstUpSlow forwards ease-out;
   }
 
-  @keyframes burstUp {
+  @keyframes burstUpSlow {
     0% {
       transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.6);
       opacity: 1;
     }
-    30% {
+    75% {
       opacity: 1;
     }
     100% {
-      transform: translateY(var(--ty)) translateX(var(--tx)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) scale(1.1);
+      /* 画面上部を完全に突き抜ける(-125vh〜-150vh) */
+      transform: translateY(var(--ty)) translateX(var(--tx)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) scale(1);
       opacity: 0;
     }
   }
@@ -488,29 +490,22 @@
   let celebrationTimer = null;
   let retriggerTimer = null;
 
-  function triggerCelebration(){
-    if(isCelebrating) return;
-    isCelebrating = true;
-    celebrationOverlay.classList.add('active');
-
-    // 下から吹き出す紙吹雪を動的に生成
-    confettiContainer.innerHTML = '';
+  function createConfettiBatch(){
     const colors = ['#ff4757', '#ffa502', '#ffea65', '#2ed573', '#1e90ff', '#9b59b6', '#ffffff'];
-    const pieceCount = 60;
+    const pieceCount = 45;
 
     for(let i=0; i<pieceCount; i++){
       const piece = document.createElement('div');
       piece.className = 'confetti-piece';
       
-      // スタート位置（画面下の横幅全域からランダム）
       piece.style.left = (Math.random() * 100) + '%';
       piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
 
-      // 吹き出す方向・高さ・回転角度をランダム設定（CSS変数へ注入）
-      const ty = -(Math.random() * 85 + 40) + 'vh'; // 画面高の40%〜125%上へ吹き飛ぶ
-      const tx = (Math.random() * 300 - 150) + 'px'; // 左右への散らばり
-      const rx = (Math.random() * 1440 - 720) + 'deg';
-      const ry = (Math.random() * 1440 - 720) + 'deg';
+      // 画面上部を余裕を持って突き抜ける距離（-120vh 〜 -160vh）
+      const ty = -(Math.random() * 40 + 120) + 'vh';
+      const tx = (Math.random() * 260 - 130) + 'px'; 
+      const rx = (Math.random() * 1800 - 900) + 'deg';
+      const ry = (Math.random() * 1800 - 900) + 'deg';
       const rz = (Math.random() * 720 - 360) + 'deg';
 
       piece.style.setProperty('--ty', ty);
@@ -519,21 +514,41 @@
       piece.style.setProperty('--ry', ry);
       piece.style.setProperty('--rz', rz);
 
-      // 個別のサイズ感と遅延
-      piece.style.animationDelay = (Math.random() * 0.25) + 's';
-      piece.style.animationDuration = (1.8 + Math.random() * 0.8) + 's';
+      // 時間を伸ばしてゆったり動かす（3.5s 〜 4.8s）
+      piece.style.animationDelay = (Math.random() * 0.3) + 's';
+      piece.style.animationDuration = (3.5 + Math.random() * 1.3) + 's';
 
       confettiContainer.appendChild(piece);
     }
+  }
 
-    // 2秒経過したら次の発火（連続ヒット）を許可
+  function triggerCelebration(){
+    // 画面をアクティブにする
+    celebrationOverlay.classList.add('active');
+
+    if(!isCelebrating){
+      isCelebrating = true;
+      confettiContainer.innerHTML = '';
+      createConfettiBatch();
+    } else {
+      // 連続発火時は追加入れ替え
+      createConfettiBatch();
+    }
+
+    // 既存の消去タイマーがあればクリアして「最後の発火から3秒」に更新
+    if(celebrationTimer) clearTimeout(celebrationTimer);
+    if(retriggerTimer) clearTimeout(retriggerTimer);
+
+    // 2秒経過したら次の再発火を受け付ける
     retriggerTimer = setTimeout(()=>{
       isCelebrating = false;
     }, 2000);
 
-    // 3秒後にオーバーレイを完全消去（タイマーリセット）
+    // 最後の発火からピッタリ3秒後に消える
     celebrationTimer = setTimeout(()=>{
       celebrationOverlay.classList.remove('active');
+      isCelebrating = false;
+      setTimeout(()=>{ confettiContainer.innerHTML = ''; }, 400);
     }, 3000);
   }
 
@@ -589,7 +604,6 @@
 
       let onSegs = Math.round(level * SEGMENTS);
       
-      // 最上段（16マス目）到達の判定
       if(onSegs >= SEGMENTS){
         reachedTop = true;
       }
@@ -638,7 +652,6 @@
       }
     }
 
-    // ゲージ頂点到達時にギミックトリガー
     if(reachedTop){
       triggerCelebration();
     }
