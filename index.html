@@ -186,24 +186,25 @@
     overflow: hidden;
   }
 
-  /* 高さ2倍（200vh）の完全シームレス虹色背景 */
+  /* 高さ2倍（200vh）の「完全シームレス」虹色背景 */
   .rainbow-bg {
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
     height: 200vh;
-    /* 0%と100%を完全に同じ色にし、途中の色相差を均一にしてチラつきを防止 */
+    /* 上端（0%）と下端（100%）を完璧に一致させ、チラつきを完全に排除 */
     background: linear-gradient(
       0deg,
       rgba(255, 71, 87, 0.55) 0%,
-      rgba(255, 165, 2, 0.55) 16.666%,
-      rgba(255, 234, 167, 0.55) 33.333%,
+      rgba(255, 165, 2, 0.55) 16.66%,
+      rgba(255, 234, 167, 0.55) 33.33%,
       rgba(46, 213, 115, 0.55) 50%,
-      rgba(30, 144, 255, 0.55) 66.666%,
-      rgba(155, 89, 182, 0.55) 83.333%,
+      rgba(30, 144, 255, 0.55) 66.66%,
+      rgba(155, 89, 182, 0.55) 83.33%,
       rgba(255, 71, 87, 0.55) 100%
     );
+    /* 常に裏でアニメーションを回し続けることで色の跳びを防止 */
     animation: moveUpBg 3s linear infinite;
     opacity: 0;
     transition: opacity 0.5s ease-out;
@@ -276,7 +277,7 @@
     gap: 16px;
   }
 
-  /* モーダル内の各設定セクション */
+  /* モーダル内の各設定セクション（統一レイアウト） */
   .setting-section {
     display: flex;
     flex-direction: column;
@@ -376,7 +377,7 @@
     transform: translateX(22px);
   }
 
-  /* とじるボタンの上のマージンを20pxに調整 */
+  /* とじるボタン */
   .modal-close{
     width:100%;
     padding:12px;
@@ -624,22 +625,27 @@
 
     const now = Date.now();
 
+    // 演出発動：虹色と紙吹雪の透明度を上げて表示
     rainbowBg.classList.add('active');
     confettiContainer.classList.remove('fading');
     
+    // 紙吹雪を追加（1秒間隔）
     if (now - lastConfettiTime >= 1000) {
       addConfettiBatch();
       lastConfettiTime = now;
     }
 
+    // 既存のフェードアウトタイマーをクリアして延長
     if(fadeStartTimer) clearTimeout(fadeStartTimer);
     if(fadeEndTimer) clearTimeout(fadeEndTimer);
 
+    // 最後の発火から1.5秒後にフェードアウトを開始
     fadeStartTimer = setTimeout(()=>{
       rainbowBg.classList.remove('active');
       confettiContainer.classList.add('fading');
     }, 1500);
 
+    // 最後の発火から2.5秒後に完全消滅（虹色のアニメーション自体は裏で動き続ける）
     fadeEndTimer = setTimeout(()=>{
       confettiContainer.innerHTML = '';
       lastConfettiTime = 0;
