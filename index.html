@@ -39,41 +39,8 @@
     min-height:100dvh;
     display:flex;
     flex-direction:column;
-    padding:0 0 0 10px; /* 左側に常時ライン用のスペースを確保 */
+    padding:0;
     position:relative;
-  }
-
-  /* --- 常時表示の虹色ライン（背景グラデーションアニメーションによるiPadチラつき防止仕様） --- */
-  .permanent-rainbow-line {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 10px;
-    height: 100vh;
-    height: 100dvh;
-    z-index: 100;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 71, 87, 1) 0%,
-      rgba(255, 165, 2, 1) 16.66%,
-      rgba(255, 234, 167, 1) 33.33%,
-      rgba(46, 213, 115, 1) 50%,
-      rgba(30, 144, 255, 1) 66.66%,
-      rgba(155, 89, 182, 1) 83.33%,
-      rgba(255, 71, 87, 1) 100%
-    );
-    background-size: 100% 200%;
-    animation: rainbowScroll 3s linear infinite;
-    will-change: background-position;
-  }
-
-  @keyframes rainbowScroll {
-    0% {
-      background-position: 0 -200%;
-    }
-    100% {
-      background-position: 0 0;
-    } 
   }
 
   .title{
@@ -257,23 +224,32 @@
     opacity: 0;
     background: linear-gradient(
       180deg,
-      rgba(255, 71, 87, 0.6) 0%,
-      rgba(255, 165, 2, 0.6) 16.66%,
-      rgba(255, 234, 167, 0.6) 33.33%,
-      rgba(46, 213, 115, 0.6) 50%,
-      rgba(30, 144, 255, 0.6) 66.66%,
-      rgba(155, 89, 182, 0.6) 83.33%,
-      rgba(255, 71, 87, 0.6) 100%
+      rgba(255, 71, 87, 0.75) 0%,
+      rgba(255, 165, 2, 0.75) 16.66%,
+      rgba(255, 234, 167, 0.75) 33.33%,
+      rgba(46, 213, 115, 0.75) 50%,
+      rgba(30, 144, 255, 0.75) 66.66%,
+      rgba(155, 89, 182, 0.75) 83.33%,
+      rgba(255, 71, 87, 0.75) 100%
     );
     background-size: 100% 200%;
-    animation: rainbowScroll 3s linear infinite;
-    transition: opacity 1.5s linear;
+    animation: rainbowScroll 2s linear infinite;
+    transition: opacity 1s linear;
   }
   .celebration-gradient-overlay.show {
     opacity: 1;
   }
   .celebration-gradient-overlay.fading {
     opacity: 0;
+  }
+
+  @keyframes rainbowScroll {
+    0% {
+      background-position: 0 -200%;
+    }
+    100% {
+      background-position: 0 0;
+    } 
   }
 
   .modal-overlay{
@@ -454,9 +430,6 @@
 </style>
 </head>
 <body>
-
-<!-- 常時表示の虹色ライン -->
-<div class="permanent-rainbow-line"></div>
 
 <!-- 満点達成時の全画面グラデーション演出（紙吹雪のすぐ下） -->
 <div class="celebration-gradient-overlay" id="celebrationGradientOverlay"></div>
@@ -714,11 +687,11 @@
     gradientFadeStartTimer = setTimeout(()=>{
       celebrationGradientOverlay.classList.add('fading');
       celebrationGradientOverlay.classList.remove('show');
-    }, 1500);
+    }, 1000);
 
     gradientFadeEndTimer = setTimeout(()=>{
       celebrationGradientOverlay.classList.remove('fading');
-    }, 3000);
+    }, 2000);
   }
 
   function resetGradientCelebration(){
@@ -747,12 +720,12 @@
 
     fadeStartTimer = setTimeout(()=>{
       confettiContainer.classList.add('fading');
-    }, 1500);
+    }, 1000);
 
     fadeEndTimer = setTimeout(()=>{
       confettiContainer.innerHTML = '';
       lastConfettiTime = 0;
-    }, 2500);
+    }, 2000);
 
     // 全画面グラデーション演出も同じタイミングで発火
     triggerGradientCelebration();
