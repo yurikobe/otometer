@@ -43,7 +43,7 @@
     position:relative;
   }
 
-  /* --- 【修正】常時表示の虹色ライン（完全シームレスループ） --- */
+  /* --- 常時表示の虹色ライン（完全シームレスループ） --- */
   .permanent-rainbow-line {
     position: fixed;
     left: 0;
@@ -58,36 +58,32 @@
     left: 0;
     top: 0;
     width: 100%;
-    height: 200vh; /* 高さ2倍のコンテナ */
+    height: 300vh; /* スクロール領域を十分に確保 (本体200vh + 予備100vh) */
     
     /* 
-       【修正ポイント】
-       200vhで1つのループになるグラデーション。
-       上端（0%）と下端（100%）を全く同じ色（#ff4757）にし、
-       中間を等間隔で配分することで、継ぎ目を完全にシームレス化。
+       【修正】CSSグラデーション：200vhで1つのシームレスパターン
     */
     background: linear-gradient(
       0deg,
-      rgba(255, 71, 87, 1) 0%,     /* 赤（開始） */
-      rgba(255, 165, 2, 1) 16.66%,  /* 橙 */
-      rgba(255, 234, 167, 1) 33.33%, /* 黄 */
-      rgba(46, 213, 115, 1) 50%,    /* 緑 */
-      rgba(30, 144, 255, 1) 66.66%,  /* 青 */
-      rgba(155, 89, 182, 1) 83.33%,  /* 紫 */
-      rgba(255, 71, 87, 1) 100%    /* 赤（終了：開始と同じ） */
+      rgba(255, 71, 87, 1) 0vh,      /* 赤 (0/6) */
+      rgba(255, 165, 2, 1) 33.3vh,   /* 橙 (1/6) */
+      rgba(255, 234, 167, 1) 66.6vh,  /* 黄 (2/6) */
+      rgba(46, 213, 115, 1) 100vh,   /* 緑 (3/6) */
+      rgba(30, 144, 255, 1) 133.3vh,  /* 青 (4/6) */
+      rgba(155, 89, 182, 1) 166.6vh,  /* 紫 (5/6) */
+      rgba(255, 71, 87, 1) 200vh     /* 赤 (6/6: 開始点と結合) */
     );
+    background-size: 100% 200vh; /* グラデーションのサイズを200vhに固定 */
+    background-repeat: repeat-y;
     
-    /* 
-       3秒かけて「画面1倍分（100vh）」だけ上にスクロール。
-       これで終了点の赤が開始点の赤の位置にピタッと重なり、ループする。
-    */
+    /* アニメーション：3秒かけて「200vh」上にスクロール */
     animation: moveUpBgPermanent 3s linear infinite;
   }
 
-  /* 常時ライン用の無限スクロールアニメーション */
+  /* 【修正】計算間違ってたので修正：本体サイズ分(200vh)動かす */
   @keyframes moveUpBgPermanent {
     0% { transform: translateY(0); }
-    100% { transform: translateY(-100vh); } /* 100vh分だけ動かす */
+    100% { transform: translateY(-200vh); } 
   }
 
   .title{
@@ -226,7 +222,7 @@
     flex-shrink:0;
   }
 
-  /* --- 紙吹雪演出用オーバーレイ（画面全体） --- */
+  /* --- 紙吹雪演出用オーバーレイ --- */
   .celebration-overlay {
     position: fixed;
     inset: 0;
@@ -278,15 +274,16 @@
   .modal-card{
     background:#fffaf3;
     border-radius:24px;
-    padding:24px 20px 20px;
+    padding:28px 24px 24px;
     width:100%;
     max-width:320px;
     box-shadow:0 16px 40px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
   }
 
+  /* モーダル内の各設定セクション */
   .setting-section {
     display: flex;
     flex-direction: column;
@@ -296,20 +293,21 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
   .setting-section h2 {
     margin: 0;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700 !important;
     color: var(--ink);
   }
+  /* 【修正】説明文のレイアウトをタイトルのすぐ下に */
   .setting-section p.desc {
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0; /* タイトルのすぐ下、コントロールとの間 */
     font-size: 12px;
     font-weight: 400;
     color: var(--sub);
-    line-height: 1.5;
+    line-height: 1.6;
   }
 
   .setting-divider {
@@ -318,21 +316,28 @@
     margin: 2px 0;
   }
 
+  /* 感度の入力コントロール */
   .sens-control-group {
     display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sens-value-display {
+    display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 2px;
   }
   .sens-num{
-    width: 48px;
-    padding: 2px 0;
+    width: 54px;
+    padding: 3px 0;
     text-align: center;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700 !important;
     color: var(--accent);
     border: 1.5px solid #ebdcd0;
-    border-radius: 8px;
+    border-radius: 9px;
     background: #ffffff;
     appearance: textfield;
   }
@@ -345,6 +350,7 @@
     width: 100%;
     accent-color: var(--accent);
     margin: 0;
+    cursor: pointer;
   }
   .sens-labels{
     display: flex;
@@ -353,6 +359,15 @@
     font-weight: 400;
     color: var(--sub);
     margin-top: -2px;
+    padding: 0 2px;
+  }
+
+  /* トグルスイッチのレイアウト調整 */
+  .setting-header-with-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px; /* 説明文との間 */
   }
 
   .switch {
@@ -393,6 +408,7 @@
     transform: translateX(22px);
   }
 
+  /* とじるボタン */
   .modal-close{
     width:100%;
     padding:12px;
@@ -400,11 +416,17 @@
     border-radius:14px;
     background:var(--accent);
     color:white;
-    font-size:14px;
-    font-weight:500 !important;
+    font-size:15px;
+    font-weight:700 !important;
     letter-spacing:1px;
     cursor:pointer;
-    margin-top: 20px;
+    margin-top: 15px;
+    box-shadow: 0 3px 0 #e0724a;
+    transition: all 0.1s;
+  }
+  .modal-close:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #e0724a;
   }
 </style>
 </head>
@@ -451,27 +473,30 @@
     <div class="modal-card">
       <!-- 設定 1: マイク感度 -->
       <div class="setting-section">
-        <div class="setting-header">
-          <h2>マイク感度</h2>
-          <div class="sens-control-group">
-            <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
+        <h2>マイク感度</h2>
+        <!-- 【修正】説明文をタイトルのすぐ下に配置 -->
+        <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
+        
+        <div class="sens-control-group">
+          <input type="range" id="sensRange" class="sens-range-full" min="1" max="100" value="50">
+          <div class="sens-labels">
+            <span>にぶい</span>
+            <div class="sens-value-display">
+              <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
+            </div>
+            <span>びんかん</span>
           </div>
         </div>
-        <input type="range" id="sensRange" class="sens-range-full" min="1" max="100" value="50">
-        <div class="sens-labels">
-          <span>にぶい</span>
-          <span>びんかん</span>
-        </div>
-        <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
       </div>
 
       <div class="setting-divider"></div>
 
       <!-- 設定 2: 紙吹雪の演出 -->
       <div class="setting-section">
-        <div class="setting-header">
+        <div class="setting-header-with-toggle">
           <h2>紙吹雪の演出</h2>
           <label class="switch">
+            <!-- デフォルトOFF -->
             <input type="checkbox" id="confettiToggle">
             <span class="slider"></span>
           </label>
@@ -655,16 +680,13 @@
       lastConfettiTime = now;
     }
 
-    // 既存のフェードアウトタイマーをクリアして延長
     if(fadeStartTimer) clearTimeout(fadeStartTimer);
     if(fadeEndTimer) clearTimeout(fadeEndTimer);
 
-    // 最後の発火から1.5秒後にフェードアウトを開始
     fadeStartTimer = setTimeout(()=>{
       confettiContainer.classList.add('fading');
     }, 1500);
 
-    // 最後の発火から2.5秒後に完全消滅
     fadeEndTimer = setTimeout(()=>{
       confettiContainer.innerHTML = '';
       lastConfettiTime = 0;
