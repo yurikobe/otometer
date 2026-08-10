@@ -3,83 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>紙吹雪 & グラデーション演出</title>
+  <title>Timer App</title>
   <style>
-    /* ==========================================
-       基本スタイル（元のまま変更なし）
-       ========================================== */
+    /* -----------------------------------
+       1. 基本スタイル・全体のレイアウト
+    ----------------------------------- */
     body {
       margin: 0;
       padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #333;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
       height: 100vh;
-      background-color: #1a1a1a;
-      font-family: sans-serif;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 画面上部のメインタイマー表示エリア */
+    #timer-container {
+      flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
+      position: relative;
+      background-color: #222;
+      box-sizing: border-box;
     }
 
-    #canvas-container {
+    #timer-display {
+      font-size: 18vw;
+      font-weight: bold;
+      letter-spacing: 2px;
+      z-index: 10;
+      text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* -----------------------------------
+       背景グラデーションアニメーション
+       （紙吹雪のすぐ下に配置・下から上へ移動）
+    ----------------------------------- */
+    #bg-gradient {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
-      z-index: 100; /* 紙吹雪キャンバス */
-    }
-
-    .ui-container {
-      position: relative;
-      z-index: 101;
-      text-align: center;
-      color: white;
-    }
-
-    button {
-      padding: 12px 24px;
-      font-size: 18px;
-      font-weight: bold;
-      background-color: #ff4081;
-      color: white;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      transition: transform 0.1s, background-color 0.2s;
-    }
-
-    button:active {
-      transform: scale(0.95);
-    }
-
-    /* ==========================================
-       本番環境用 グラデーションオーバーレイ
-       ========================================== */
-    #gradient-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 99; /* 紙吹雪(z-index:100)のすぐ下 */
+      z-index: 20; /* タイマー文字(10)の上、紙吹雪(30)のすぐ下 */
       opacity: 0;
-      
-      /* 下から上に動くグラデーション背景の設定 */
-      background: linear-gradient(0deg, #ff4081, #7c4dff, #00e5ff, #ff4081);
-      background-size: 100% 300%;
-      background-position: 0% 100%;
-      
-      /* アニメーション：下から上への無限ループレンダリング */
+      pointer-events: none;
+      background: linear-gradient(0deg, 
+        rgba(255,0,0,0.6), 
+        rgba(255,154,0,0.6), 
+        rgba(208,255,0,0.6), 
+        rgba(0,255,108,0.6), 
+        rgba(0,108,255,0.6), 
+        rgba(178,0,255,0.6), 
+        rgba(255,0,0,0.6)
+      );
+      background-size: 100% 200%;
       animation: gradientMoveUp 3s linear infinite;
-      
-      /* opacity変更時のなめらかな変化（1.5秒かけてフェードアウト） */
-      transition: opacity 1.5s linear;
+      transition: opacity 1.5s linear; /* 1.5秒かけてフェードアウト */
     }
 
-    /* アニメーション定義：下(100%)から上(0%)へ移動 */
+    /* 発火時に付与するアクティブクラス（透明度60%） */
+    #bg-gradient.active {
+      opacity: 0.6;
+      transition: opacity 0s; /* 発火時は即座に表示・リセット */
+    }
+
+    /* 下から上に流れるキーフレーム */
     @keyframes gradientMoveUp {
       0% {
         background-position: 0% 100%;
@@ -89,128 +84,397 @@
       }
     }
 
-    /* 発火状態のクラス（不透明度 0.6） */
-    #gradient-overlay.active {
-      opacity: 0.6;
-      /* フェードイン時は瞬時に立ち上げる */
-      transition: opacity 0s;
+    /* 左側のグラデーションバー（本番非表示） */
+    #left-gradient-bar {
+      display: none;
+    }
+
+    /* -----------------------------------
+       紙吹雪キャンバス
+    ----------------------------------- */
+    #confetti-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 30; /* グラデーションの上 */
+      pointer-events: none;
+    }
+
+    /* -----------------------------------
+       2. 操作ボタンエリア（下部）
+    ----------------------------------- */
+    #controls {
+      display: flex;
+      height: 25vh;
+      background-color: #111;
+      border-top: 2px solid #444;
+    }
+
+    .btn {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 4vw;
+      font-weight: bold;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.1s, transform 0.05s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    #btn-start {
+      background-color: #28a745;
+    }
+    #btn-start:hover {
+      background-color: #218838;
+    }
+
+    #btn-stop {
+      background-color: #dc3545;
+    }
+    #btn-stop:hover {
+      background-color: #c82333;
+    }
+
+    #btn-reset {
+      background-color: #ffc107;
+      color: #000;
+    }
+    #btn-reset:hover {
+      background-color: #e0a800;
+    }
+
+    #btn-settings {
+      background-color: #6c757d;
+    }
+    #btn-settings:hover {
+      background-color: #5a6268;
+    }
+
+    /* -----------------------------------
+       3. 設定モーダル画面
+    ----------------------------------- */
+    #settings-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #settings-content {
+      background-color: #222;
+      padding: 30px;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    }
+
+    #settings-content h2 {
+      margin-top: 0;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+
+    .setting-item {
+      margin: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.2rem;
+    }
+
+    .setting-item input[type="number"] {
+      width: 80px;
+      padding: 5px;
+      font-size: 1.1rem;
+      border-radius: 4px;
+      border: 1px solid #555;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+    }
+
+    .setting-item input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    #btn-close-settings {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #007bff;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #btn-close-settings:hover {
+      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
 
-  <!-- 本番環境用グラデーションオーバーレイ -->
-  <div id="gradient-overlay"></div>
+  <!-- タイマー表示エリア -->
+  <div id="timer-container">
+    <div id="timer-display">00:00.00</div>
+    <!-- 背景グラデーション -->
+    <div id="bg-gradient"></div>
+    <!-- 本番環境では不要な左のバー -->
+    <div id="left-gradient-bar"></div>
+    <!-- 紙吹雪用キャンバス -->
+    <canvas id="confetti-canvas"></canvas>
+  </div>
 
-  <!-- 紙吹雪用キャンバス -->
-  <canvas id="canvas-container"></canvas>
+  <!-- 操作ボタンエリア -->
+  <div id="controls">
+    <button id="btn-start" class="btn">START</button>
+    <button id="btn-stop" class="btn">STOP</button>
+    <button id="btn-reset" class="btn">RESET</button>
+    <button id="btn-settings" class="btn">設定</button>
+  </div>
 
-  <div class="ui-container">
-    <h1>お祝い画面</h1>
-    <button id="trigger-btn">紙吹雪を発火</button>
+  <!-- 設定画面（モーダル） -->
+  <div id="settings-modal">
+    <div id="settings-content">
+      <h2>設定</h2>
+      <div class="setting-item">
+        <label for="input-target-time">目標時間 (秒):</label>
+        <input type="number" id="input-target-time" value="10" min="1" step="0.1">
+      </div>
+      <div class="setting-item">
+        <label for="input-confetti">紙吹雪エフェクト:</label>
+        <input type="checkbox" id="input-confetti" checked>
+      </div>
+      <button id="btn-close-settings">保存して閉じる</button>
+    </div>
   </div>
 
   <script>
-    /* ==========================================
-       グラデーション演出の制御ロジック
-       ========================================== */
-    let fadeOutTimer = null;
-    let fadeStartTimer = null;
+    /* -----------------------------------
+       タイマー状態変数
+    ----------------------------------- */
+    let startTime = 0;
+    let elapsedTime = 0;
+    let timerInterval = null;
+    let isRunning = false;
 
-    function triggerGradient() {
-      const overlay = document.getElementById('gradient-overlay');
+    // 設定値
+    let targetTimeSec = 10;
+    let enableConfetti = true;
+    let hasTriggeredTarget = false;
 
-      // 進行中のタイマーをクリア（連続発火時のリセット処理）
-      if (fadeStartTimer) clearTimeout(fadeStartTimer);
-      if (fadeOutTimer) clearTimeout(fadeOutTimer);
+    // タイマー・フェード制御用変数
+    let gradientStartTimeout = null;
+    let gradientFadeTimeout = null;
 
-      // トランジションを一旦クリアして即座に不透明度0.6へ
-      overlay.style.transition = 'opacity 0s';
-      overlay.classList.add('active');
-
-      // 1.5秒（1500ms）後からフェードアウトを開始
-      fadeStartTimer = setTimeout(() => {
-        // 1.5秒かけて0までフェードアウトさせる設定（合計3秒で完了）
-        overlay.style.transition = 'opacity 1.5s linear';
-        overlay.classList.remove('active');
-      }, 1500);
-    }
-
-    /* ==========================================
-       紙吹雪ロジック（元のまま変更なし）
-       ========================================== */
-    const canvas = document.getElementById('canvas-container');
+    /* DOM要素 */
+    const timerDisplay = document.getElementById('timer-display');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const btnReset = document.getElementById('btn-reset');
+    const btnSettings = document.getElementById('btn-settings');
+    const settingsModal = document.getElementById('settings-modal');
+    const btnCloseSettings = document.getElementById('btn-close-settings');
+    const inputTargetTime = document.getElementById('input-target-time');
+    const inputConfetti = document.getElementById('input-confetti');
+    const bgGradient = document.getElementById('bg-gradient');
+    const canvas = document.getElementById('confetti-canvas');
     const ctx = canvas.getContext('2d');
 
+    /* キャンバスサイズ設定 */
     function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    let confetti = [];
-    const colors = ['#ff4081', '#7c4dff', '#00e5ff', '#ffeb3b', '#76ff03'];
+    /* -----------------------------------
+       タイマー表示更新処理
+    ----------------------------------- */
+    function updateDisplay(timeMs) {
+      const totalSeconds = timeMs / 1000;
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = Math.floor(totalSeconds % 60);
+      const ms = Math.floor((timeMs % 1000) / 10);
 
-    class ConfettiParticle {
+      const formattedMins = String(mins).padStart(2, '0');
+      const formattedSecs = String(secs).padStart(2, '0');
+      const formattedMs = String(ms).padStart(2, '0');
+
+      timerDisplay.textContent = `${formattedMins}:${formattedSecs}.${formattedMs}`;
+    }
+
+    /* -----------------------------------
+       タイマーメインループ
+    ----------------------------------- */
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      startTime = Date.now() - elapsedTime;
+
+      timerInterval = setInterval(() => {
+        elapsedTime = Date.now() - startTime;
+        updateDisplay(elapsedTime);
+
+        // 目標時間到達判定
+        if (!hasTriggeredTarget && elapsedTime >= targetTimeSec * 1000) {
+          hasTriggeredTarget = true;
+          triggerTargetEffects();
+        }
+      }, 10);
+    }
+
+    function stopTimer() {
+      if (!isRunning) return;
+      isRunning = false;
+      clearInterval(timerInterval);
+    }
+
+    function resetTimer() {
+      stopTimer();
+      elapsedTime = 0;
+      hasTriggeredTarget = false;
+      updateDisplay(0);
+      stopConfetti();
+    }
+
+    /* -----------------------------------
+       目標時間到達時の演出発火
+    ----------------------------------- */
+    function triggerTargetEffects() {
+      if (enableConfetti) {
+        startConfetti();
+        triggerGradientEffect();
+      }
+    }
+
+    /* グラデーション表示・フェード制御 */
+    function triggerGradientEffect() {
+      // 既存のタイマーをクリアしてリセット
+      if (gradientStartTimeout) clearTimeout(gradientStartTimeout);
+      if (gradientFadeTimeout) clearTimeout(gradientFadeTimeout);
+
+      // アクティブ化（即座に透明度60%で表示）
+      bgGradient.classList.remove('active');
+      void bgGradient.offsetWidth; // リフロー発生させてアニメーション・トランジションをリセット
+      bgGradient.classList.add('active');
+
+      // 1.5秒後からフェードアウト開始（1.5秒かけて完全透明にするので、合計3秒後に完了）
+      gradientStartTimeout = setTimeout(() => {
+        bgGradient.classList.remove('active');
+      }, 1500);
+    }
+
+    /* -----------------------------------
+       紙吹雪（Confetti）エフェクト
+    ----------------------------------- */
+    let confettiParticles = [];
+    let confettiAnimationId = null;
+
+    class Particle {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = -20;
         this.size = Math.random() * 10 + 5;
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-        this.speedY = Math.random() * 3 + 2;
-        this.speedX = Math.random() * 2 - 1;
+        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        this.vx = Math.random() * 4 - 2;
+        this.vy = Math.random() * 3 + 2;
         this.rotation = Math.random() * 360;
-        this.rotationSpeed = Math.random() * 10 - 5;
-        this.opacity = 1;
+        this.vRot = Math.random() * 10 - 5;
       }
 
       update() {
-        this.y += this.speedY;
-        this.x += this.speedX;
-        this.rotation += this.rotationSpeed;
-        this.opacity -= 0.005;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.rotation += this.vRot;
       }
 
       draw() {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate((this.rotation * Math.PI) / 180);
-        ctx.globalAlpha = Math.max(this.opacity, 0);
         ctx.fillStyle = this.color;
         ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
         ctx.restore();
       }
     }
 
-    function fireConfetti() {
-      // 紙吹雪パーティクルの追加
-      for (let i = 0; i < 80; i++) {
-        confetti.push(new ConfettiParticle());
+    function startConfetti() {
+      stopConfetti();
+      confettiParticles = [];
+      for (let i = 0; i < 150; i++) {
+        confettiParticles.push(new Particle());
       }
-
-      // 紙吹雪と連動してグラデーションを発火
-      triggerGradient();
+      animateConfetti();
     }
 
-    function animate() {
+    function animateConfetti() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      for (let i = confetti.length - 1; i >= 0; i--) {
-        confetti[i].update();
-        confetti[i].draw();
-        
-        if (confetti[i].opacity <= 0 || confetti[i].y > canvas.height) {
-          confetti.splice(i, 1);
+      confettiParticles.forEach((p, index) => {
+        p.update();
+        p.draw();
+        // 画面外に出たら削除
+        if (p.y > canvas.height + 20) {
+          confettiParticles.splice(index, 1);
         }
-      }
-      
-      requestAnimationFrame(animate);
-    }
-    animate();
+      });
 
-    // ボタンクリック時の発火イベント
-    document.getElementById('trigger-btn').addEventListener('click', fireConfetti);
+      if (confettiParticles.length > 0) {
+        confettiAnimationId = requestAnimationFrame(animateConfetti);
+      } else {
+        stopConfetti();
+      }
+    }
+
+    function stopConfetti() {
+      if (confettiAnimationId) {
+        cancelAnimationFrame(confettiAnimationId);
+        confettiAnimationId = null;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    /* -----------------------------------
+       イベントリスナー設定
+    ----------------------------------- */
+    btnStart.addEventListener('click', startTimer);
+    btnStop.addEventListener('click', stopTimer);
+    btnReset.addEventListener('click', resetTimer);
+
+    // 設定モーダルの開閉
+    btnSettings.addEventListener('click', () => {
+      stopTimer();
+      inputTargetTime.value = targetTimeSec;
+      inputConfetti.checked = enableConfetti;
+      settingsModal.style.display = 'flex';
+    });
+
+    btnCloseSettings.addEventListener('click', () => {
+      targetTimeSec = parseFloat(inputTargetTime.value) || 10;
+      enableConfetti = inputConfetti.checked;
+      settingsModal.style.display = 'none';
+    });
   </script>
 </body>
 </html>
