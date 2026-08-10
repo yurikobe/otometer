@@ -186,21 +186,26 @@
     overflow: hidden;
   }
 
-  /* 虹色背景（アルファ値 0.6） */
+  /* 虹色背景（下から上への移動 animation） */
   .rainbow-bg {
     position: absolute;
-    inset: -50%;
-    background: conic-gradient(
-      from 0deg,
+    inset: 0;
+    height: 300%;
+    top: 0;
+    background: linear-gradient(
+      0deg,
       rgba(255, 71, 87, 0.6),
       rgba(255, 165, 2, 0.6),
       rgba(255, 234, 167, 0.6),
       rgba(46, 213, 115, 0.6),
       rgba(30, 144, 255, 0.6),
       rgba(155, 89, 182, 0.6),
-      rgba(255, 71, 87, 0.6)
+      rgba(255, 71, 87, 0.6),
+      rgba(255, 165, 2, 0.6),
+      rgba(255, 234, 167, 0.6),
+      rgba(46, 213, 115, 0.6)
     );
-    animation: rotateBg 3s linear infinite;
+    animation: moveUpBg 3s linear infinite;
     opacity: 0;
     /* 発火時はすぐ表示、フェードアウト開始後は1.5秒かけて消滅 */
     transition: opacity 1.5s linear;
@@ -210,9 +215,9 @@
     transition: opacity 0.15s ease-in;
   }
 
-  @keyframes rotateBg {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  @keyframes moveUpBg {
+    0% { transform: translateY(0%); }
+    100% { transform: translateY(-50%); }
   }
 
   /* 紙吹雪コンテナ */
@@ -235,7 +240,6 @@
     height: 20px;
     border-radius: 2px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    /* 一定のスピードで勢いよく最後まで飛び出す */
     animation: burstAngle forwards linear;
   }
 
@@ -491,7 +495,11 @@
 
   function addConfettiBatch(){
     const colors = ['#ff4757', '#ffa502', '#ffea65', '#2ed573', '#1e90ff', '#9b59b6', '#ffffff'];
-    const pieceCount = 45;
+    const pieceCount = 100; // 紙吹雪の数を増量（45 → 100枚）
+
+    // 画面下から上まで垂直に飛ぶ場合の標準速度（移動距離120vhを3秒で移動）
+    const baseVerticalVh = 120;
+    const baseTime = 3.0; // 秒
 
     for(let i=0; i<pieceCount; i++){
       const piece = document.createElement('div');
@@ -502,15 +510,13 @@
       piece.style.left = startX + 'vw';
       piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
 
-      // 発射角度：まっすぐ上(90deg) 〜 左右斜め75degの範囲 (15deg 〜 165deg)
+      // 発射角度：垂直(90deg) 〜 左右斜め75degの範囲 (15deg 〜 165deg)
       const angleDeg = Math.random() * 150 + 15;
       const angleRad = angleDeg * Math.PI / 180;
 
-      // 画面上部をしっかり突っ切る距離（120vh〜150vh）
-      const distanceVh = Math.random() * 30 + 120;
-      const ty = -distanceVh; // 上方向
-      // 角度に応じた横移動量
-      const tx = distanceVh / Math.tan(angleRad);
+      // 画面上部をしっかり突っ切る垂直到達距離 (120vh〜150vh)
+      const ty = -(Math.random() * 30 + 120); // 負の方向（上へ）
+      const tx = (-ty) / Math.tan(angleRad);  // X方向の移動量
 
       const rx = (Math.random() * 1400 - 700) + 'deg';
       const ry = (Math.random() * 1400 - 700) + 'deg';
@@ -522,14 +528,18 @@
       piece.style.setProperty('--ry', ry);
       piece.style.setProperty('--rz', rz);
 
-      // 垂直移動距離に応じた移動時間（直線3秒を基準に計算）
-      const duration = (distanceVh / 120) * (2.8 + Math.random() * 0.6);
+      // --- 移動速度の計算（三平方の定理で移動距離に応じた一律速度を維持） ---
+      const actualDistance = Math.sqrt(tx * tx + ty * ty);
+      // 基準速度（distance/baseTime）に合わせ、さらに0.8〜1.2倍のランダムな速度の揺らぎを与える
+      const speedFactor = 0.8 + Math.random() * 0.4; // 0.8 ～ 1.2
+      const duration = (actualDistance / (baseVerticalVh / baseTime)) / speedFactor;
+
       piece.style.animationDuration = duration + 's';
-      piece.style.animationDelay = (Math.random() * 0.2) + 's';
+      piece.style.animationDelay = (Math.random() * 0.25) + 's';
 
       confettiContainer.appendChild(piece);
 
-      // アニメーション完了時に要素を自動削除（メモリ保護）
+      // アニメーション完了時に要素を自動削除
       setTimeout(() => {
         piece.remove();
       }, (duration + 0.5) * 1000);
