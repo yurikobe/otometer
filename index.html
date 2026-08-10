@@ -39,8 +39,51 @@
     min-height:100dvh;
     display:flex;
     flex-direction:column;
-    padding:0;
+    padding:0 0 0 10px; /* 左側に常時ライン用のスペースを確保 */
     position:relative;
+  }
+
+  /* --- 常時表示の虹色ライン（完全シームレスループ） --- */
+  .permanent-rainbow-line {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 100vh;
+    z-index: 100;
+    overflow: hidden;
+  }
+  .rainbow-scroll-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 300vh; /* スクロール領域を十分に確保 (本体200vh + 予備100vh) */
+    
+    /* 
+       【修正】CSSグラデーション：200vhで1つのシームレスパターン
+    */
+    background: linear-gradient(
+      0deg,
+      rgba(255, 71, 87, 1) 0vh,      /* 赤 (0/6) */
+      rgba(255, 165, 2, 1) 33.3vh,   /* 橙 (1/6) */
+      rgba(255, 234, 167, 1) 66.6vh,  /* 黄 (2/6) */
+      rgba(46, 213, 115, 1) 100vh,   /* 緑 (3/6) */
+      rgba(30, 144, 255, 1) 133.3vh,  /* 青 (4/6) */
+      rgba(155, 89, 182, 1) 166.6vh,  /* 紫 (5/6) */
+      rgba(255, 71, 87, 1) 200vh     /* 赤 (6/6: 開始点と結合) */
+    );
+    background-size: 100% 200vh; /* グラデーションのサイズを200vhに固定 */
+    background-repeat: repeat-y;
+    
+    /* アニメーション：3秒かけて「200vh」上にスクロール */
+    animation: moveUpBgPermanent 3s linear infinite;
+  }
+
+  /* 【修正】計算間違ってたので修正：本体サイズ分(200vh)動かす */
+  @keyframes moveUpBgPermanent {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-200vh); } 
   }
 
   .title{
@@ -61,17 +104,17 @@
     font-weight:700 !important;
   }
 
-  /* メイン画面：メーターカード */
   .card{
     flex:1;
     background:var(--card);
     padding:12px;
+    border-radius: 16px 0 0 16px; 
     display:flex;
     flex-direction:column;
-    min-height:0; /* 重要：スクロールを防ぐ */
+    min-height:0;
+    box-shadow: -2px 2px 10px rgba(90,74,63,0.05);
   }
 
-  /* メーターの棒が並ぶエリア */
   .bars{
     flex:1;
     display:flex;
@@ -80,20 +123,18 @@
     gap:5px;
     min-height:0;
   }
-  /* 1本のメーターの棒 */
   .bar{
     flex:1;
     height:100%;
     display:flex;
-    flex-direction:column-reverse; /* 下から積み上げる */
+    flex-direction:column-reverse;
     gap:4px;
   }
-  /* 棒の中の1つのセグメント */
   .seg{
     width:100%;
     flex:1;
     border-radius:6px;
-    background:#f1ece6; /* 初期状態の色（土台） */
+    background:#f1ece6;
   }
 
   .controls{
@@ -158,13 +199,12 @@
     display:none;
   }
 
-  /* 歯車（設定）ボタンのCSS修正 */
   .settings-btn{
     position:absolute;
     top:12px;
     right:12px;
-    width:36px;
-    height:36px;
+    width:28px;
+    height:28px;
     border-radius:50%;
     border:none;
     background:rgba(255,255,255,0.6);
@@ -172,39 +212,50 @@
     align-items:center;
     justify-content:center;
     cursor:pointer;
-    z-index:10;
-    padding:0; /* paddingをリセット */
+    z-index:110; 
+    padding:0;
   }
   .settings-btn svg{
-    width:24px; /* サイズを固定 */
-    height:24px;
+    width:18px;
+    height:18px;
     display:block;
-    flex-shrink:0; /* 潰れるのを防ぐ */
+    flex-shrink:0;
   }
 
-  /* --- 虹色演出用オーバーレイ --- */
-  .rainbow-overlay {
+  /* --- 紙吹雪演出用オーバーレイ --- */
+  .celebration-overlay {
     position: fixed;
     inset: 0;
-    background: linear-gradient(0deg,
-      rgba(255, 71, 87, 0.45) 0%,
-      rgba(255, 165, 2, 0.45) 15%,
-      rgba(255, 234, 167, 0.45) 30%,
-      rgba(46, 213, 115, 0.45) 50%,
-      rgba(30, 144, 255, 0.45) 70%,
-      rgba(155, 89, 182, 0.45) 85%,
-      rgba(255, 71, 87, 0.45) 100%
-    );
-    z-index: 200;
+    z-index: 200; 
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.5s ease-out;
-    display: none;
+    overflow: hidden;
   }
-  .rainbow-overlay.active {
+  .confetti-container {
+    position: absolute;
+    inset: 0;
     opacity: 1;
-    display: block;
-    transition: opacity 0.1s ease-in;
+    transition: opacity 1s linear;
+  }
+  .confetti-container.fading {
+    opacity: 0;
+  }
+  .confetti-piece {
+    position: absolute;
+    bottom: -5vh;
+    width: 12px;
+    height: 20px;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    animation: burstAngle forwards linear;
+  }
+
+  @keyframes burstAngle {
+    0% {
+      transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    }
+    100% {
+      transform: translateY(var(--ty)) translateX(var(--tx)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));
+    }
   }
 
   .modal-overlay{
@@ -214,7 +265,7 @@
     display:none;
     align-items:center;
     justify-content:center;
-    z-index:100;
+    z-index:300; 
     padding:20px;
   }
   .modal-overlay.open{
@@ -223,63 +274,141 @@
   .modal-card{
     background:#fffaf3;
     border-radius:24px;
-    padding:24px 20px 20px;
+    padding:28px 24px 24px;
     width:100%;
     max-width:320px;
     box-shadow:0 16px 40px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
   }
-  .modal-card h2{
-    margin:0 0 16px;
-    font-size:16px;
-    font-weight:700 !important;
-    color:var(--ink);
-    text-align:center;
+
+  /* モーダル内の各設定セクション */
+  .setting-section {
+    display: flex;
+    flex-direction: column;
   }
-  .control-group{
-    margin-bottom:16px;
+  
+  .setting-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
   }
-  .range-box{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:2px;
+  .setting-section h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700 !important;
+    color: var(--ink);
   }
-  .sens-range{
-    flex:1;
-    height:24px;
-    accent-color:var(--accent);
+  /* 【修正】説明文のレイアウトをタイトルのすぐ下に */
+  .setting-section p.desc {
+    margin: 0 0 10px 0; /* タイトルのすぐ下、コントロールとの間 */
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--sub);
+    line-height: 1.6;
+  }
+
+  .setting-divider {
+    height: 1px;
+    background-color: #efe5d8;
+    margin: 2px 0;
+  }
+
+  /* 感度の入力コントロール */
+  .sens-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sens-value-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 2px;
   }
   .sens-num{
-    font-size:18px;
-    font-weight:700 !important;
-    color:var(--accent);
-    width:40px;
-    text-align:center;
+    width: 54px;
+    padding: 3px 0;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700 !important;
+    color: var(--accent);
+    border: 1.5px solid #ebdcd0;
+    border-radius: 9px;
+    background: #ffffff;
+    appearance: textfield;
+  }
+  .sens-num::-webkit-outer-spin-button,
+  .sens-num::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  .sens-range-full{
+    width: 100%;
+    accent-color: var(--accent);
+    margin: 0;
+    cursor: pointer;
   }
   .sens-labels{
-    display:flex;
-    justify-content:space-between;
-    font-size:11px;
-    font-weight:400;
-    color:var(--sub);
-    padding:0 3px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--sub);
+    margin-top: -2px;
+    padding: 0 2px;
   }
 
-  .check-box{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    cursor:pointer;
-    font-size:14px;
-    color:var(--ink);
-    margin: 20px 0;
-  }
-  .check-box input[type="checkbox"]{
-    width:18px;
-    height:18px;
-    accent-color:var(--accent);
+  /* トグルスイッチのレイアウト調整 */
+  .setting-header-with-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px; /* 説明文との間 */
   }
 
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #ccc;
+    transition: .3s;
+    border-radius: 26px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: var(--accent);
+  }
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+
+  /* とじるボタン */
   .modal-close{
     width:100%;
     padding:12px;
@@ -287,24 +416,37 @@
     border-radius:14px;
     background:var(--accent);
     color:white;
-    font-size:14px;
-    font-weight:500 !important;
+    font-size:15px;
+    font-weight:700 !important;
     letter-spacing:1px;
     cursor:pointer;
-    margin-top: 10px;
+    margin-top: 15px;
+    box-shadow: 0 3px 0 #e0724a;
+    transition: all 0.1s;
+  }
+  .modal-close:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #e0724a;
   }
 </style>
 </head>
 <body>
 
-<div class="rainbow-overlay" id="rainbowOverlay"></div>
+<!-- 常時表示の虹色ライン -->
+<div class="permanent-rainbow-line">
+  <div class="rainbow-scroll-bg"></div>
+</div>
+
+<!-- 満点達成時の紙吹雪演出用オーバーレイ -->
+<div class="celebration-overlay" id="celebrationOverlay">
+  <div class="confetti-container" id="confettiContainer"></div>
+</div>
 
 <div class="phone">
-  <!-- 歯車（設定）ボタンの修正 -->
   <button class="settings-btn" id="settingsBtn" aria-label="せってい">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83a2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2a2 2 0 0 1-2-2v-.09a1.65 1.65 0 0 0-1-1.51a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0a2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2a2 2 0 0 1 2-2h.09a1.65 1.65 0 0 0 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83a2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2a2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0a2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2a2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
     </svg>
   </button>
 
@@ -312,7 +454,6 @@
     <h1><span class="oto">おと</span>メーター</h1>
   </div>
 
-  <!-- メイン画面（メーター） -->
   <div class="card">
     <div class="bars" id="bars"></div>
   </div>
@@ -328,25 +469,41 @@
     <div class="msg" id="msg"></div>
   </div>
 
-  <!-- 設定モーダル -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-card">
-      <h2>せってい</h2>
-      <div class="control-group">
-        <div class="range-box">
-          <input type="range" id="sensRange" class="sens-range" min="1" max="100" value="50">
-          <span class="sens-num" id="sensNum">50</span>
-        </div>
-        <div class="sens-labels">
-          <span>にぶい</span>
-          <span>びんかん</span>
+      <!-- 設定 1: マイク感度 -->
+      <div class="setting-section">
+        <h2>マイク感度</h2>
+        <!-- 【修正】説明文をタイトルのすぐ下に配置 -->
+        <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
+        
+        <div class="sens-control-group">
+          <input type="range" id="sensRange" class="sens-range-full" min="1" max="100" value="50">
+          <div class="sens-labels">
+            <span>にぶい</span>
+            <div class="sens-value-display">
+              <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
+            </div>
+            <span>びんかん</span>
+          </div>
         </div>
       </div>
-      <label class="check-box">
-        <!-- 【修正】デフォルトOFF -->
-        <input type="checkbox" id="rainbowToggle">
-        <span>音が大きいとき虹色にする</span>
-      </label>
+
+      <div class="setting-divider"></div>
+
+      <!-- 設定 2: 紙吹雪の演出 -->
+      <div class="setting-section">
+        <div class="setting-header-with-toggle">
+          <h2>紙吹雪の演出</h2>
+          <label class="switch">
+            <!-- デフォルトOFF -->
+            <input type="checkbox" id="confettiToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <p class="desc">音が最大値の時に紙吹雪が表示されます</p>
+      </div>
+
       <button class="modal-close" id="modalClose">とじる</button>
     </div>
   </div>
@@ -354,10 +511,9 @@
 
 <script>
 (function(){
-  // --- 初期設定 ---
-  const NUM_BARS = 14;   // メーターの棒の数
-  const SEGMENTS = 16;   // 棒の中のセグメントの数
-  const OFF_COLOR = '#f1ece6'; // 土台（OFF）の色
+  const NUM_BARS = 14;
+  const SEGMENTS = 16;
+  const OFF_COLOR = '#f1ece6';
 
   const barsContainer = document.getElementById('bars');
   const micBtn = document.getElementById('micBtn');
@@ -367,184 +523,380 @@
   const modalClose = document.getElementById('modalClose');
   const sensRange = document.getElementById('sensRange');
   const sensNum = document.getElementById('sensNum');
-  const rainbowToggle = document.getElementById('rainbowToggle');
-  const rainbowOverlay = document.getElementById('rainbowOverlay');
+  const confettiToggle = document.getElementById('confettiToggle');
+  
+  const confettiContainer = document.getElementById('confettiContainer');
 
-  // セグメントの色定義（下から上にグラデーション）
+  // 紙吹雪演出の初期設定：OFF
+  let confettiEnabled = false;
+
+  const minF = 80, maxF = 8000;
+  const freqEdges = [];
+  for(let i=0;i<=NUM_BARS;i++){
+    freqEdges.push(minF * Math.pow(maxF/minF, i/NUM_BARS));
+  }
+
   const LEVELS = 5;
-  const LEVEL_HUE = [142, 84, 48, 28, 4];   // 緑 -> 黄 -> 橙 -> 赤
-  const LEVEL_SAT = [58, 62, 88, 88, 78];   // 彩度
-  const LEVEL_LIGHT = [48, 54, 58, 58, 56]; // 輝度
-  const BLACK_MIX_MAX = 0.4; // 左右端で黒を混ぜる量
-  const WHITE_MIX_MAX = 0.4; // 右側端で白を混ぜる量
+  const LEVEL_HUE = [142, 84, 48, 28, 4];
+  const LEVEL_SAT = [58, 62, 88, 88, 78];
+  const LEVEL_LIGHT = [48, 54, 58, 58, 56];
+  const BLACK_MIX_MAX = 0.4;
+  const WHITE_MIX_MAX = 0.4;
 
-  // 1つのセグメントの色を計算
   function segColor(barIndex, segIndexFromBottom){
     const level = Math.min(LEVELS-1, Math.floor(segIndexFromBottom / SEGMENTS * LEVELS));
     const t = NUM_BARS > 1 ? barIndex / (NUM_BARS - 1) : 0.5;
     const dist = t - 0.5;
     const baseL = LEVEL_LIGHT[level];
     let l;
-    if(dist <= 0){ // 左半分（黒を混ぜる）
+    if(dist <= 0){
       const factor = (-dist) / 0.5;
       l = baseL * (1 - factor * BLACK_MIX_MAX);
-    } else { // 右半分（白を混ぜる）
+    } else {
       const factor = dist / 0.5;
       l = baseL + (100 - baseL) * factor * WHITE_MIX_MAX;
     }
     return `hsl(${LEVEL_HUE[level]}, ${LEVEL_SAT[level]}%, ${l}%)`;
   }
 
-  // メーターの棒とセグメントを画面上に作成（初期化）
   const segEls = [];
-  function createBars() {
-    barsContainer.innerHTML = ''; // 既存をクリア
-    for(let b=0;b<NUM_BARS;b++){
-      const barEl = document.createElement('div');
-      barEl.className = 'bar';
-      const segs = [];
-      for(let s=0;s<SEGMENTS;s++){
-        const segEl = document.createElement('div');
-        segEl.className = 'seg';
-        barEl.appendChild(segEl);
-        segs.push(segEl);
-      }
-      barsContainer.appendChild(barEl);
-      segEls.push(segs);
+  for(let b=0;b<NUM_BARS;b++){
+    const barEl = document.createElement('div');
+    barEl.className = 'bar';
+    const segs = [];
+    for(let s=0;s<SEGMENTS;s++){
+      const segEl = document.createElement('div');
+      segEl.className = 'seg';
+      barEl.appendChild(segEl);
+      segs.push(segEl);
     }
+    barsContainer.appendChild(barEl);
+    segEls.push(segs);
   }
-  createBars(); // ここでメイン画面を作成
 
-  // メーターを土台の色にリセット
   function resetBars(){
     segEls.forEach(segs=>{
-      segs.forEach(seg=> seg.style.background = OFF_COLOR);
+      segs.forEach(seg=>{
+        seg.style.background = OFF_COLOR;
+        seg.style.opacity = '1';
+      });
     });
-    rainbowOverlay.classList.remove('active');
   }
 
-  // --- オーディオ処理 ---
   let audioCtx, analyser, source, stream, dataArray, rafId;
   let running = false;
-  let sensitivity = 50; // 初期感度
-  let useRainbow = false; // 初期虹色OFF
-  const smoothLevel = new Array(NUM_BARS).fill(0); // なめらかにするための保持
 
-  // ノイズゲートとゲインの計算（感度から）
+  let sensitivity = 50;
+  const GATE_MARGIN_AT_MIN = 70;
+  const GATE_MARGIN_AT_MAX = 5;
+  const MIN_GATE_AT_MIN = 45;
+  const MIN_GATE_AT_MAX = 3;
+  const GAIN_AT_MIN = 0.55;
+  const GAIN_AT_MAX = 2.0;
+
   function currentGate(){
-    const t = (sensitivity - 1) / 99; // 0 (にぶい) to 1 (びんかん)
+    const t = (sensitivity - 1) / 99;
     return {
-      margin: 60 + (-50 * t), // 60 -> 10 (dBmargin)
-      gain: 0.6 + (1.4 * t)   // 0.6 -> 2.0 (ゲイン倍率)
+      margin: GATE_MARGIN_AT_MIN + (GATE_MARGIN_AT_MAX - GATE_MARGIN_AT_MIN) * t,
+      min: MIN_GATE_AT_MIN + (MIN_GATE_AT_MAX - MIN_GATE_AT_MIN) * t,
+      gain: GAIN_AT_MIN + (GAIN_AT_MAX - GAIN_AT_MIN) * t
     };
   }
+  const noiseFloor = new Array(NUM_BARS).fill(0);
+  const smoothLevel = new Array(NUM_BARS).fill(0);
+  const RELEASE = 0.25;
+  let calibrating = false;
+  let calibrateFrames = 0;
+  const CALIBRATE_TOTAL_FRAMES = 40;
 
-  // マイク解析（メインループ）
+  const peakLevel = new Array(NUM_BARS).fill(0);
+  const peakTime = new Array(NUM_BARS).fill(0);
+  const HOLD_MS = 800;
+  const FADE_MS = 800;
+  const PEAK_UPDATE_MARGIN = 0.005;
+
+  /* --- 紙吹雪演出フェード制御 --- */
+  let fadeStartTimer = null;
+  let fadeEndTimer = null;
+  let lastConfettiTime = 0;
+
+  function addConfettiBatch(){
+    const colors = ['#ff4757', '#ffa502', '#ffea65', '#2ed573', '#1e90ff', '#9b59b6', '#ffffff'];
+    const pieceCount = 100;
+
+    const baseVerticalVh = 120;
+    const baseTime = 3.0;
+
+    for(let i=0; i<pieceCount; i++){
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      
+      const startX = (Math.random() * 300 - 100);
+      piece.style.left = startX + 'vw';
+      piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+      const angleDeg = Math.random() * 150 + 15;
+      const angleRad = angleDeg * Math.PI / 180;
+
+      const ty = -(Math.random() * 30 + 120);
+      const tx = (-ty) / Math.tan(angleRad);
+
+      const rx = (Math.random() * 1400 - 700) + 'deg';
+      const ry = (Math.random() * 1400 - 700) + 'deg';
+      const rz = (Math.random() * 720 - 360) + 'deg';
+
+      piece.style.setProperty('--ty', ty + 'vh');
+      piece.style.setProperty('--tx', tx + 'vh');
+      piece.style.setProperty('--rx', rx);
+      piece.style.setProperty('--ry', ry);
+      piece.style.setProperty('--rz', rz);
+
+      const actualDistance = Math.sqrt(tx * tx + ty * ty);
+      const speedFactor = 0.8 + Math.random() * 0.4;
+      const duration = (actualDistance / (baseVerticalVh / baseTime)) / speedFactor;
+
+      piece.style.animationDuration = duration + 's';
+      piece.style.animationDelay = (Math.random() * 0.25) + 's';
+
+      confettiContainer.appendChild(piece);
+
+      setTimeout(() => {
+        piece.remove();
+      }, (duration + 0.5) * 1000);
+    }
+  }
+
+  function triggerCelebration(){
+    if(!confettiEnabled) return;
+
+    const now = Date.now();
+
+    // 紙吹雪コンテナを表示
+    confettiContainer.classList.remove('fading');
+    
+    // 紙吹雪を追加（1秒間隔）
+    if (now - lastConfettiTime >= 1000) {
+      addConfettiBatch();
+      lastConfettiTime = now;
+    }
+
+    if(fadeStartTimer) clearTimeout(fadeStartTimer);
+    if(fadeEndTimer) clearTimeout(fadeEndTimer);
+
+    fadeStartTimer = setTimeout(()=>{
+      confettiContainer.classList.add('fading');
+    }, 1500);
+
+    fadeEndTimer = setTimeout(()=>{
+      confettiContainer.innerHTML = '';
+      lastConfettiTime = 0;
+    }, 2500);
+  }
+
+  function bandAverage(b){
+    const nyquist = audioCtx.sampleRate / 2;
+    const binHz = nyquist / dataArray.length;
+    const f0 = freqEdges[b], f1 = freqEdges[b+1];
+    const i0 = Math.max(0, Math.floor(f0/binHz));
+    const i1 = Math.min(dataArray.length-1, Math.ceil(f1/binHz));
+    let sum=0, count=0;
+    for(let i=i0;i<=i1;i++){ sum += dataArray[i]; count++; }
+    return count>0 ? sum/count : 0;
+  }
+
   function draw(){
     analyser.getByteFrequencyData(dataArray);
 
-    const freqLength = dataArray.length;
-    const nyquist = audioCtx.sampleRate / 2;
-    const binHz = nyquist / freqLength;
+    if(calibrating){
+      for(let b=0;b<NUM_BARS;b++){
+        noiseFloor[b] += bandAverage(b);
+      }
+      calibrateFrames++;
+      if(calibrateFrames >= CALIBRATE_TOTAL_FRAMES){
+        for(let b=0;b<NUM_BARS;b++){
+          noiseFloor[b] = noiseFloor[b] / CALIBRATE_TOTAL_FRAMES;
+        }
+        calibrating = false;
+      }
+      rafId = requestAnimationFrame(draw);
+      return;
+    }
 
-    // 解析範囲（80Hz〜8000Hz）
-    const f0 = 80, f1 = 8000;
+    const now = performance.now();
     const gate = currentGate();
-    const release = 0.25; // なめらかに戻る（1.0で一瞬）
+    let reachedTop = false;
 
     for(let b=0;b<NUM_BARS;b++){
-      const fr0 = f0 * Math.pow(f1/f0, b/NUM_BARS);
-      const fr1 = f0 * Math.pow(f1/f0, (b+1)/NUM_BARS);
-      const i0 = Math.floor(fr0 / binHz);
-      const i1 = Math.min(freqLength - 1, Math.ceil(fr1 / binHz));
+      const raw = bandAverage(b);
+      const gateLevel = Math.max(noiseFloor[b] + gate.margin, gate.min);
+      let adjusted = raw - gateLevel;
+      if(adjusted < 0) adjusted = 0;
+      const maxPossible = 255 - gateLevel;
+      let level = maxPossible > 0 ? adjusted / maxPossible : 0;
+      level = Math.min(1, level * gate.gain);
+      level = Math.min(1, Math.pow(level, 1.15));
 
-      let sum = 0, count = 0;
-      for(let i=i0; i<=i1; i++){ sum += dataArray[i]; count++; }
-      const averageL = count>0 ? sum/count : 0; // 0〜255
-      const dBVal = 20 * Math.log10(Math.max(1e-5, averageL / 255)) + 120; // 約15〜120dB
-
-      const thresholddB = 75; // OFFの色とONの色の境目
-      const levelFactor = thresholddB - gate.margin; // ゲインがかかり始める前の土台 dB
-      const leveldB = thresholddB + Math.max(0, dBVal - levelFactor) * gate.gain; // 閾値dB以上にゲイン
-      
-      let level = Math.max(0, (leveldB - thresholddB) / (120 - thresholddB)); // 0.0〜1.0以上に
-      level = Math.min(1, level * 1.3); // ONになるレベルをゲイン。1.0でカンスト
-      level = Math.pow(level, 1.15); // ちょっと反応を鈍く
-
-      // なめらかに戻る処理（上昇は一瞬）
-      if(level > smoothLevel[b]){ smoothLevel[b] = level; }
-      else { smoothLevel[b] += (level - smoothLevel[b]) * release; }
+      if(level > smoothLevel[b]){
+        smoothLevel[b] = level;
+      } else {
+        smoothLevel[b] += (level - smoothLevel[b]) * RELEASE;
+      }
       level = smoothLevel[b];
 
-      // セグメントへの反映
-      const onSegs = Math.round(level * SEGMENTS);
+      let onSegs = Math.round(level * SEGMENTS);
+      
+      if(onSegs >= SEGMENTS){
+        reachedTop = true;
+      }
+
+      const prevElapsed = now - peakTime[b];
+      const prevFaded = prevElapsed > HOLD_MS + FADE_MS;
+
+      if(prevFaded){
+        peakLevel[b] = level;
+        peakTime[b] = now;
+      } else if(level > peakLevel[b] + PEAK_UPDATE_MARGIN){
+        peakLevel[b] = level;
+        peakTime[b] = now;
+      }
+
+      const elapsed = now - peakTime[b];
+      let peakOpacityVal;
+      if(elapsed <= HOLD_MS){
+        peakOpacityVal = 1;
+      } else if(elapsed <= HOLD_MS + FADE_MS){
+        peakOpacityVal = 1 - (elapsed - HOLD_MS) / FADE_MS;
+      } else {
+        peakOpacityVal = 0;
+      }
+      const peakSeg = Math.floor(peakLevel[b] * SEGMENTS) - 1;
+
       const segs = segEls[b];
       for(let s=0;s<SEGMENTS;s++){
-        if(s < onSegs){ segs[s].style.background = segColor(b, s); }
-        else { segs[s].style.background = OFF_COLOR; }
+        const seg = segs[s];
+        const isOn = s < onSegs;
+        const isPeak = !isOn && s === peakSeg && peakSeg >= onSegs && peakOpacityVal > 0;
+        if(isOn){
+          seg.style.background = segColor(b, s);
+          seg.style.opacity = '1';
+        } else if(isPeak){
+          const vivid = segColor(b, s);
+          const pct = Math.round(peakOpacityVal*100);
+          seg.style.background = pct <= 1
+            ? OFF_COLOR
+            : `color-mix(in oklab, ${vivid} ${pct}%, ${OFF_COLOR})`;
+          seg.style.opacity = '1';
+        } else {
+          seg.style.background = OFF_COLOR;
+          seg.style.opacity = '1';
+        }
       }
     }
 
-    // 虹色演出（音が大きいとき）
-    const totalLevel = smoothLevel.reduce((a,b)=> a+b, 0) / NUM_BARS;
-    if(useRainbow && totalLevel > 0.8){ rainbowOverlay.classList.add('active'); }
-    else { rainbowOverlay.classList.remove('active'); }
+    if(reachedTop){
+      triggerCelebration();
+    }
 
     rafId = requestAnimationFrame(draw);
   }
 
-  // --- イベント処理 ---
-  // マイクボタンクリック
   async function start(){
-    msg.textContent = ''; micBtn.disabled = true;
+    msg.textContent = '';
+    micBtn.disabled = true;
     try{
-      stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true } });
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio:{
+          echoCancellation:true,
+          noiseSuppression:true,
+          autoGainControl:true
+        }
+      });
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if(audioCtx.state === 'suspended'){ await audioCtx.resume(); }
       source = audioCtx.createMediaStreamSource(stream);
       analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 1024; // 1つの棒に入る波形の数。512本の周波数
-      analyser.smoothingTimeConstant = 0.65; // なめらかさ
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.7;
       source.connect(analyser);
       dataArray = new Uint8Array(analyser.frequencyBinCount);
-      running = true; micBtn.classList.add('on');
+
+      running = true;
+      calibrating = true;
+      calibrateFrames = 0;
+      noiseFloor.fill(0);
+      smoothLevel.fill(0);
+      micBtn.classList.add('on');
+      micBtn.setAttribute('aria-label','マイク');
       draw();
     }catch(err){
       console.error(err);
-      if(err.name === 'NotAllowedError'){ msg.textContent = 'マイクを許可してね'; }
-      else { msg.textContent = 'マイクをおこせなかったよ'; }
-    } finally { micBtn.disabled = false; }
+      if(err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'){
+        msg.textContent = 'マイクを許可（きょか）してね';
+      } else if(err.name === 'NotFoundError'){
+        msg.textContent = 'マイクがみつからないよ';
+      } else {
+        msg.textContent = 'マイクをおこせなかったよ: ' + err.message;
+      }
+    } finally {
+      micBtn.disabled = false;
+    }
   }
 
   function stop(){
     running = false;
+    calibrating = false;
     if(rafId) cancelAnimationFrame(rafId);
-    if(stream) stream.getTracks().forEach(t=>t.stop());
-    if(audioCtx) audioCtx.close();
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+    if(audioCtx){ audioCtx.close(); }
     resetBars();
+    peakLevel.fill(0);
+    peakTime.fill(0);
     smoothLevel.fill(0);
+    if(fadeStartTimer) clearTimeout(fadeStartTimer);
+    if(fadeEndTimer) clearTimeout(fadeEndTimer);
+    confettiContainer.classList.add('fading');
+    confettiContainer.innerHTML = '';
+    lastConfettiTime = 0;
     micBtn.classList.remove('on');
+    micBtn.setAttribute('aria-label','マイク');
   }
 
   micBtn.addEventListener('click', ()=>{
     if(running){ stop(); } else { start(); }
   });
 
-  // 設定モーダル
-  settingsBtn.addEventListener('click', ()=>{ modalOverlay.classList.add('open'); });
-  modalClose.addEventListener('click', ()=>{ modalOverlay.classList.remove('open'); });
-  modalOverlay.addEventListener('click', (e)=>{ if(e.target === modalOverlay) modalOverlay.classList.remove('open'); });
+  function openModal(){
+    sensRange.value = String(sensitivity);
+    sensNum.value = String(sensitivity);
+    // スイッチの状態を反映
+    confettiToggle.checked = confettiEnabled;
+    modalOverlay.classList.add('open');
+  }
+  function closeModal(){
+    modalOverlay.classList.remove('open');
+  }
+  function setSensitivity(v){
+    let n = parseInt(v, 10);
+    if(isNaN(n)) n = sensitivity;
+    n = Math.max(1, Math.min(100, n));
+    sensitivity = n;
+    sensRange.value = String(n);
+    sensNum.value = String(n);
+  }
 
-  sensRange.addEventListener('input', (e)=>{
-    sensitivity = e.target.value;
-    sensNum.textContent = sensitivity;
+  settingsBtn.addEventListener('click', openModal);
+  modalClose.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e)=>{
+    if(e.target === modalOverlay) closeModal();
+  });
+  sensRange.addEventListener('input', ()=> setSensitivity(sensRange.value));
+  sensNum.addEventListener('input', ()=> setSensitivity(sensNum.value));
+  
+  confettiToggle.addEventListener('change', (e)=>{
+    confettiEnabled = e.target.checked;
   });
 
-  rainbowToggle.addEventListener('change', (e)=>{
-    useRainbow = e.target.checked;
-    if(!useRainbow) rainbowOverlay.classList.remove('active');
-  });
-
-  resetBars(); // 初期色セット
+  resetBars();
 })();
 </script>
 
