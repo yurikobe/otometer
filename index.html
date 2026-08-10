@@ -43,7 +43,7 @@
     position:relative;
   }
 
-  /* --- 常時表示の虹色ライン（完全シームレスループ） --- */
+  /* --- 【修正】常時表示の虹色ライン（チラつき完全解消版） --- */
   .permanent-rainbow-line {
     position: fixed;
     left: 0;
@@ -58,32 +58,42 @@
     left: 0;
     top: 0;
     width: 100%;
-    height: 300vh; /* スクロール領域を十分に確保 (本体200vh + 予備100vh) */
+    height: 100%; /* 親（100vh）と同じ高さ */
     
     /* 
-       【修正】CSSグラデーション：200vhで1つのシームレスパターン
+       【修正ポイント】
+       チラつきを防ぐため、CSSの `background` のループ機能を使います。
+       1. 200vh分で1ループするグラデーションを定義。
+       2. 開始色と終了色を完璧に同じ（赤）にする（シームレス化）。
+       3. background-imageで、同じグラデーションを2つ縦に並べる（ gradient, gradient ）。
+       4. background-sizeを高さ200vhにする。
+       これで、リセットの瞬間（-200vh移動した時）も描画が途切れずエンドレスになります。
     */
-    background: linear-gradient(
+    --rainbow-grad: linear-gradient(
       0deg,
-      rgba(255, 71, 87, 1) 0vh,      /* 赤 (0/6) */
-      rgba(255, 165, 2, 1) 33.3vh,   /* 橙 (1/6) */
-      rgba(255, 234, 167, 1) 66.6vh,  /* 黄 (2/6) */
-      rgba(46, 213, 115, 1) 100vh,   /* 緑 (3/6) */
-      rgba(30, 144, 255, 1) 133.3vh,  /* 青 (4/6) */
-      rgba(155, 89, 182, 1) 166.6vh,  /* 紫 (5/6) */
-      rgba(255, 71, 87, 1) 200vh     /* 赤 (6/6: 開始点と結合) */
+      rgba(255, 71, 87, 1) 0%,       /* 赤 */
+      rgba(255, 165, 2, 1) 16.66%,   /* 橙 */
+      rgba(255, 234, 167, 1) 33.33%,  /* 黄 */
+      rgba(46, 213, 115, 1) 50%,     /* 緑 */
+      rgba(30, 144, 255, 1) 66.66%,   /* 青 */
+      rgba(155, 89, 182, 1) 83.33%,   /* 紫 */
+      rgba(255, 71, 87, 1) 100%      /* 赤（開始と同じ） */
     );
-    background-size: 100% 200vh; /* グラデーションのサイズを200vhに固定 */
-    background-repeat: repeat-y;
+
+    background-image: var(--rainbow-grad), var(--rainbow-grad);
+    background-position: 0 0, 0 200vh; /* 2枚目を1枚目の下に配置 */
+    background-size: 100% 200vh; /* 1パターンを200vhの高さにする */
+    background-repeat: repeat-y; /* 縦に繰り返す */
     
-    /* アニメーション：3秒かけて「200vh」上にスクロール */
-    animation: moveUpBgPermanent 3s linear infinite;
+    /* アニメーション：3秒かけて「200vh（1ループ分）」上にスクロール */
+    animation: moveUpBgEternally 3s linear infinite;
+    will-change: transform; /* 描画最適化 */
   }
 
-  /* 【修正】計算間違ってたので修正：本体サイズ分(200vh)動かす */
-  @keyframes moveUpBgPermanent {
+  /* 【修正】リセット位置を描画領域（200vh）と完璧に一致させる */
+  @keyframes moveUpBgEternally {
     0% { transform: translateY(0); }
-    100% { transform: translateY(-200vh); } 
+    100% { transform: translateY(-200vh); } /* 1ループ分移動 */
   }
 
   .title{
@@ -274,13 +284,13 @@
   .modal-card{
     background:#fffaf3;
     border-radius:24px;
-    padding:28px 24px 24px;
+    padding:24px 20px 20px;
     width:100%;
     max-width:320px;
     box-shadow:0 16px 40px rgba(0,0,0,0.25);
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
   }
 
   /* モーダル内の各設定セクション */
@@ -293,17 +303,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
   .setting-section h2 {
     margin: 0;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700 !important;
     color: var(--ink);
   }
-  /* 【修正】説明文のレイアウトをタイトルのすぐ下に */
+  /* 説明文スタイル（感度バーの下用） */
   .setting-section p.desc {
-    margin: 0 0 10px 0; /* タイトルのすぐ下、コントロールとの間 */
+    margin: 8px 0 0 0; /* ラベルの下に配置 */
     font-size: 12px;
     font-weight: 400;
     color: var(--sub);
@@ -316,41 +326,48 @@
     margin: 2px 0;
   }
 
-  /* 感度の入力コントロール */
-  .sens-control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  /* --- 【修正】マイク感度コンテナと動く数字吹き出し --- */
+  .sens-control-area {
+    position: relative; /* 吹き出しの絶対位置の基準 */
+    padding-top: 35px; /* 吹き出しが表示されるスペースを確保 */
+    margin-bottom: 5px;
   }
-  .sens-value-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 2px;
-  }
-  .sens-num{
-    width: 54px;
-    padding: 3px 0;
-    text-align: center;
-    font-size: 20px;
+
+  /* 動く数字吹き出し（ツールチップ） */
+  .sens-tooltip {
+    position: absolute;
+    top: 0;
+    left: 50%; /* JSで動的に変更 */
+    transform: translateX(-50%); /* 常に中央合わせ */
+    background-color: var(--accent);
+    color: white;
+    font-size: 16px;
     font-weight: 700 !important;
-    color: var(--accent);
-    border: 1.5px solid #ebdcd0;
-    border-radius: 9px;
-    background: #ffffff;
-    appearance: textfield;
+    padding: 4px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    pointer-events: none; /* バーの操作を邪魔しない */
+    transition: left 0.1s ease-out; /* 移動を少し滑らかに */
   }
-  .sens-num::-webkit-outer-spin-button,
-  .sens-num::-webkit-inner-spin-button{
-    -webkit-appearance:none;
-    margin:0;
+  /* 吹き出しの三角部分 */
+  .sens-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -6px; /* 下に配置 */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0 6px; /* 下向きの三角 */
+    border-style: solid;
+    border-color: var(--accent) transparent transparent transparent;
   }
+
   .sens-range-full{
     width: 100%;
     accent-color: var(--accent);
     margin: 0;
     cursor: pointer;
+    height: 20px; /* タップエリアを確保 */
   }
   .sens-labels{
     display: flex;
@@ -362,14 +379,7 @@
     padding: 0 2px;
   }
 
-  /* トグルスイッチのレイアウト調整 */
-  .setting-header-with-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px; /* 説明文との間 */
-  }
-
+  /* トグルスイッチ */
   .switch {
     position: relative;
     display: inline-block;
@@ -416,17 +426,11 @@
     border-radius:14px;
     background:var(--accent);
     color:white;
-    font-size:15px;
-    font-weight:700 !important;
+    font-size:14px;
+    font-weight:500 !important;
     letter-spacing:1px;
     cursor:pointer;
-    margin-top: 15px;
-    box-shadow: 0 3px 0 #e0724a;
-    transition: all 0.1s;
-  }
-  .modal-close:active {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 #e0724a;
+    margin-top: 20px;
   }
 </style>
 </head>
@@ -473,35 +477,36 @@
     <div class="modal-card">
       <!-- 設定 1: マイク感度 -->
       <div class="setting-section">
-        <h2>マイク感度</h2>
-        <!-- 【修正】説明文をタイトルのすぐ下に配置 -->
-        <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
+        <div class="setting-header">
+          <h2>マイク感度</h2>
+        </div>
         
-        <div class="sens-control-group">
+        <!-- 【修正】感度エリア：吹き出しとバー -->
+        <div class="sens-control-area" id="sensControlArea">
+          <!-- 動く吹き出し -->
+          <div class="sens-tooltip" id="sensTooltip">50</div>
+          <!-- 調節バー -->
           <input type="range" id="sensRange" class="sens-range-full" min="1" max="100" value="50">
           <div class="sens-labels">
             <span>にぶい</span>
-            <div class="sens-value-display">
-              <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
-            </div>
             <span>びんかん</span>
           </div>
+          <!-- 【修正】説明文をここ（ラベルの下）に移動 -->
+          <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
         </div>
       </div>
 
       <div class="setting-divider"></div>
 
-      <!-- 設定 2: 紙吹雪の演出 -->
+      <!-- 設定 2: 紙吹雪演出 -->
       <div class="setting-section">
-        <div class="setting-header-with-toggle">
-          <h2>紙吹雪の演出</h2>
+        <div class="setting-header">
+          <h2>紙吹雪・虹色演出</h2>
           <label class="switch">
-            <!-- デフォルトOFF -->
-            <input type="checkbox" id="confettiToggle">
+            <input type="checkbox" id="confettiToggle" checked>
             <span class="slider"></span>
           </label>
         </div>
-        <p class="desc">音が最大値の時に紙吹雪が表示されます</p>
       </div>
 
       <button class="modal-close" id="modalClose">とじる</button>
@@ -521,14 +526,16 @@
   const settingsBtn = document.getElementById('settingsBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const modalClose = document.getElementById('modalClose');
+  
+  // 【修正】感度設定関連のエレメント
   const sensRange = document.getElementById('sensRange');
-  const sensNum = document.getElementById('sensNum');
+  const sensTooltip = document.getElementById('sensTooltip');
+  
   const confettiToggle = document.getElementById('confettiToggle');
   
   const confettiContainer = document.getElementById('confettiContainer');
 
-  // 紙吹雪演出の初期設定：OFF
-  let confettiEnabled = false;
+  let confettiEnabled = true;
 
   const minF = 80, maxF = 8000;
   const freqEdges = [];
@@ -671,10 +678,8 @@
 
     const now = Date.now();
 
-    // 紙吹雪コンテナを表示
     confettiContainer.classList.remove('fading');
     
-    // 紙吹雪を追加（1秒間隔）
     if (now - lastConfettiTime >= 1000) {
       addConfettiBatch();
       lastConfettiTime = now;
@@ -865,23 +870,70 @@
     if(running){ stop(); } else { start(); }
   });
 
-  function openModal(){
-    sensRange.value = String(sensitivity);
-    sensNum.value = String(sensitivity);
-    // スイッチの状態を反映
-    confettiToggle.checked = confettiEnabled;
-    modalOverlay.classList.add('open');
+  // --- 【修正】感度設定（数字吹き出しの移動ロジック） ---
+
+  // 吹き出しの位置を計算して更新する関数
+  function updateSensTooltip() {
+    const val = parseInt(sensRange.value, 10);
+    const min = parseInt(sensRange.min, 10);
+    const max = parseInt(sensRange.max, 10);
+    
+    // バーの幅に対する現在の値の割合 (0〜1)
+    const ratio = (val - min) / (max - min);
+    
+    // バー自体の正確な幅を取得
+    const rangeWidth = sensRange.offsetWidth;
+    
+    // バーの両端にあるつまみ（thumb）の半径分、計算位置を補正する必要がある。
+    // input[type="range"] の標準的なつまみの半径は約10px（環境によるがCSSで固定してない場合）。
+    // ここでは10pxとして計算。
+    const thumbRadius = 10; 
+    
+    // つまみの中心のX座標を計算
+    // 0%のときthumbRadius、100%のときrangeWidth - thumbRadiusになるように補正
+    const thumbCenterPos = thumbRadius + (rangeWidth - thumbRadius * 2) * ratio;
+    
+    // 親コンテナ（.sens-control-area）に対する割合（%）に変換
+    const percentPos = (thumbCenterPos / rangeWidth) * 100;
+    
+    // 吹き出しのテキストと位置を更新
+    sensTooltip.textContent = val;
+    // transform: translateX(-50%) がCSSにあるので、centerPos%を指定すれば中央が合う
+    sensTooltip.style.left = percentPos + '%';
   }
-  function closeModal(){
-    modalOverlay.classList.remove('open');
-  }
-  function setSensitivity(v){
+
+  // 感度を設定するメイン関数
+  function setSensitivity(v) {
     let n = parseInt(v, 10);
     if(isNaN(n)) n = sensitivity;
     n = Math.max(1, Math.min(100, n));
     sensitivity = n;
-    sensRange.value = String(n);
-    sensNum.value = String(n);
+    sensRange.value = n;
+    // 吹き出しを更新
+    updateSensTooltip();
+  }
+
+  // バーを動かした時
+  sensRange.addEventListener('input', (e) => {
+    setSensitivity(e.target.value);
+  });
+
+  // 画面サイズが変わった時、位置を再計算
+  window.addEventListener('resize', updateSensTooltip);
+
+  function openModal(){
+    // モーダルを開く時に値を同期
+    sensRange.value = sensitivity;
+    confettiToggle.checked = confettiEnabled;
+    modalOverlay.classList.add('open');
+    // 開いた瞬間はOffsetWidthが0なので、描画を待ってから吹き出し位置を計算
+    requestAnimationFrame(() => {
+        updateSensTooltip();
+    });
+  }
+  
+  function closeModal(){
+    modalOverlay.classList.remove('open');
   }
 
   settingsBtn.addEventListener('click', openModal);
@@ -889,8 +941,6 @@
   modalOverlay.addEventListener('click', (e)=>{
     if(e.target === modalOverlay) closeModal();
   });
-  sensRange.addEventListener('input', ()=> setSensitivity(sensRange.value));
-  sensNum.addEventListener('input', ()=> setSensitivity(sensNum.value));
   
   confettiToggle.addEventListener('change', (e)=>{
     confettiEnabled = e.target.checked;
