@@ -43,7 +43,7 @@
     position:relative;
   }
 
-  /* --- 常時表示の虹色ライン（完全シームレス・ループ＆チラつき防止処理） --- */
+  /* --- 常時表示の虹色ライン（高さ200vhで1ループ & iPadチラつき対策強化） --- */
   .permanent-rainbow-line {
     position: fixed;
     left: 0;
@@ -58,17 +58,19 @@
     left: 0;
     top: 0;
     width: 100%;
-    height: 200vh; /* 100vhのパターンを2つ縦に連結 */
+    height: 400vh; /* 200vhのパターンを2つ縦に連結 */
     display: flex;
     flex-direction: column;
     animation: scrollVertical 3s linear infinite;
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
   }
   .rainbow-unit {
     width: 100%;
-    height: 100vh; /* 画面1枚分の高さ */
+    height: 200vh; /* 高さ200vhで1つのグラデーションループ */
     flex-shrink: 0;
     background: linear-gradient(
       0deg,
@@ -83,8 +85,14 @@
   }
 
   @keyframes scrollVertical {
-    0% { transform: translate3d(0, 0, 0); }
-    100% { transform: translate3d(0, -100vh, 0); } 
+    0% {
+      transform: translate3d(0, 0, 0);
+      -webkit-transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(0, -200vh, 0);
+      -webkit-transform: translate3d(0, -200vh, 0);
+    } 
   }
 
   .title{
@@ -438,7 +446,7 @@
 </head>
 <body>
 
-<!-- 常時表示の虹色ライン (完全シームレスループ構造) -->
+<!-- 常時表示の虹色ライン (高さ200vh構造 & 完全シームレスループ) -->
 <div class="permanent-rainbow-line">
   <div class="rainbow-track">
     <div class="rainbow-unit"></div>
