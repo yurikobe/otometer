@@ -43,7 +43,7 @@
     position:relative;
   }
 
-  /* --- 常時表示の虹色ライン（画面左端10px） --- */
+  /* --- 【修正】常時表示の虹色ライン（完全シームレスループ） --- */
   .permanent-rainbow-line {
     position: fixed;
     left: 0;
@@ -58,20 +58,36 @@
     left: 0;
     top: 0;
     width: 100%;
-    height: 200vh; /* 高さ2倍 */
-    /* シームレスなグラデーション配置 */
+    height: 200vh; /* 高さ2倍のコンテナ */
+    
+    /* 
+       【修正ポイント】
+       200vhで1つのループになるグラデーション。
+       上端（0%）と下端（100%）を全く同じ色（#ff4757）にし、
+       中間を等間隔で配分することで、継ぎ目を完全にシームレス化。
+    */
     background: linear-gradient(
       0deg,
-      rgba(255, 71, 87, 1) 0%,
-      rgba(255, 165, 2, 1) 16.666%,
-      rgba(255, 234, 167, 1) 33.333%,
-      rgba(46, 213, 115, 1) 50%,
-      rgba(30, 144, 255, 1) 66.666%,
-      rgba(155, 89, 182, 1) 83.333%,
-      rgba(255, 71, 87, 1) 100%
+      rgba(255, 71, 87, 1) 0%,     /* 赤（開始） */
+      rgba(255, 165, 2, 1) 16.66%,  /* 橙 */
+      rgba(255, 234, 167, 1) 33.33%, /* 黄 */
+      rgba(46, 213, 115, 1) 50%,    /* 緑 */
+      rgba(30, 144, 255, 1) 66.66%,  /* 青 */
+      rgba(155, 89, 182, 1) 83.33%,  /* 紫 */
+      rgba(255, 71, 87, 1) 100%    /* 赤（終了：開始と同じ） */
     );
-    /* 3秒で画面1倍分（100vh）上にスクロール＝常時シームレスループ */
-    animation: moveUpBg 3s linear infinite;
+    
+    /* 
+       3秒かけて「画面1倍分（100vh）」だけ上にスクロール。
+       これで終了点の赤が開始点の赤の位置にピタッと重なり、ループする。
+    */
+    animation: moveUpBgPermanent 3s linear infinite;
+  }
+
+  /* 常時ライン用の無限スクロールアニメーション */
+  @keyframes moveUpBgPermanent {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-100vh); } /* 100vh分だけ動かす */
   }
 
   .title{
@@ -96,7 +112,7 @@
     flex:1;
     background:var(--card);
     padding:12px;
-    border-radius: 16px 0 0 16px; /* 右側は直線、左側は丸く */
+    border-radius: 16px 0 0 16px; 
     display:flex;
     flex-direction:column;
     min-height:0;
@@ -200,7 +216,7 @@
     align-items:center;
     justify-content:center;
     cursor:pointer;
-    z-index:110; /* 常時ラインより上に */
+    z-index:110; 
     padding:0;
   }
   .settings-btn svg{
@@ -210,15 +226,14 @@
     flex-shrink:0;
   }
 
-  /* --- 満点達成時の紙吹雪演出用（常時ラインとは別、画面全体） --- */
+  /* --- 紙吹雪演出用オーバーレイ（画面全体） --- */
   .celebration-overlay {
     position: fixed;
     inset: 0;
-    z-index: 200; /* 最前面 */
+    z-index: 200; 
     pointer-events: none;
     overflow: hidden;
   }
-  /* 紙吹雪コンテナ */
   .confetti-container {
     position: absolute;
     inset: 0;
@@ -247,12 +262,6 @@
     }
   }
 
-  /* 背景スクロールアニメーション（共通） */
-  @keyframes moveUpBg {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-100vh); }
-  }
-
   .modal-overlay{
     position:fixed;
     inset:0;
@@ -260,7 +269,7 @@
     display:none;
     align-items:center;
     justify-content:center;
-    z-index:300; /* 最前面 */
+    z-index:300; 
     padding:20px;
   }
   .modal-overlay.open{
@@ -278,7 +287,6 @@
     gap: 16px;
   }
 
-  /* モーダル内の各設定セクション */
   .setting-section {
     display: flex;
     flex-direction: column;
@@ -310,7 +318,6 @@
     margin: 2px 0;
   }
 
-  /* 感度の入力コントロール */
   .sens-control-group {
     display: flex;
     align-items: center;
@@ -348,7 +355,6 @@
     margin-top: -2px;
   }
 
-  /* トグルスイッチ */
   .switch {
     position: relative;
     display: inline-block;
@@ -387,7 +393,6 @@
     transform: translateX(22px);
   }
 
-  /* とじるボタン */
   .modal-close{
     width:100%;
     padding:12px;
@@ -457,23 +462,20 @@
           <span>にぶい</span>
           <span>びんかん</span>
         </div>
-        <!-- 説明文を復活 -->
         <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
       </div>
 
       <div class="setting-divider"></div>
 
-      <!-- 設定 2: 紙吹雪の演出（タイトル変更、説明文追加、デフォルトOFF） -->
+      <!-- 設定 2: 紙吹雪の演出 -->
       <div class="setting-section">
         <div class="setting-header">
           <h2>紙吹雪の演出</h2>
           <label class="switch">
-            <!-- デフォルトOFF (checkedを削除) -->
             <input type="checkbox" id="confettiToggle">
             <span class="slider"></span>
           </label>
         </div>
-        <!-- 説明文を追加 -->
         <p class="desc">音が最大値の時に紙吹雪が表示されます</p>
       </div>
 
@@ -640,7 +642,6 @@
   }
 
   function triggerCelebration(){
-    // オンになっている場合のみ紙吹雪を発動
     if(!confettiEnabled) return;
 
     const now = Date.now();
@@ -722,7 +723,6 @@
 
       let onSegs = Math.round(level * SEGMENTS);
       
-      // どこかのバーが最大値に達したか判定
       if(onSegs >= SEGMENTS){
         reachedTop = true;
       }
@@ -771,7 +771,6 @@
       }
     }
 
-    // 最大値に達したら紙吹雪演出トリガー
     if(reachedTop){
       triggerCelebration();
     }
