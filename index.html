@@ -3,133 +3,214 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>全画面グラデーションエフェクト</title>
+  <title>紙吹雪 & グラデーション演出</title>
   <style>
-    /* --------------------------------------------------
-       グラデーション用オーバーレイ (画面全体)
-    -------------------------------------------------- */
-    .gradient-overlay {
+    /* ==========================================
+       基本スタイル（元のまま変更なし）
+       ========================================== */
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background-color: #1a1a1a;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100; /* 紙吹雪キャンバス */
+    }
+
+    .ui-container {
+      position: relative;
+      z-index: 101;
+      text-align: center;
+      color: white;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: bold;
+      background-color: #ff4081;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    /* ==========================================
+       本番環境用 グラデーションオーバーレイ
+       ========================================== */
+    #gradient-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      pointer-events: none; /* 下の要素の操作を邪魔しない */
-      z-index: 999; /* 紙吹雪(例: z-index: 1000)のすぐ下になるよう設定 */
-      
-      /* 下から上に動くグラデーション背景 */
-      background: linear-gradient(0deg, 
-        rgba(255, 105, 180, 0.8), 
-        rgba(255, 215, 0, 0.8), 
-        rgba(0, 191, 255, 0.8), 
-        rgba(147, 112, 219, 0.8)
-      );
-      background-size: 100% 300%;
-      background-position: bottom; /* 初期位置：下 */
-      
-      opacity: 0; /* 通常時は非表示 */
-      transition: opacity 1.5s ease-out; /* フェードアウト用のトランジション */
-    }
-
-    /* アニメーション再生中クラス */
-    .gradient-overlay.active {
-      opacity: 0.6; /* 透明度60% */
-      animation: moveBottomToTop 3s linear forwards;
-    }
-
-    /* フェードアウト準備クラス（1.5秒経過後に付与） */
-    .gradient-overlay.fading-out {
+      pointer-events: none;
+      z-index: 99; /* 紙吹雪(z-index:100)のすぐ下 */
       opacity: 0;
+      
+      /* 下から上に動くグラデーション背景の設定 */
+      background: linear-gradient(0deg, #ff4081, #7c4dff, #00e5ff, #ff4081);
+      background-size: 100% 300%;
+      background-position: 0% 100%;
+      
+      /* アニメーション：下から上への無限ループレンダリング */
+      animation: gradientMoveUp 3s linear infinite;
+      
+      /* opacity変更時のなめらかな変化（1.5秒かけてフェードアウト） */
+      transition: opacity 1.5s linear;
     }
 
-    /* 下から上に動くキーフレーム */
-    @keyframes moveBottomToTop {
+    /* アニメーション定義：下(100%)から上(0%)へ移動 */
+    @keyframes gradientMoveUp {
       0% {
-        background-position: 0% 100%; /* 下 */
+        background-position: 0% 100%;
       }
       100% {
-        background-position: 0% 0%;   /* 上 */
+        background-position: 0% 0%;
       }
     }
 
-    /* デモ用スタイル (本番組み込み時には不要) */
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #f0f0f0;
-      font-family: sans-serif;
-    }
-    .demo-btn {
-      padding: 12px 24px;
-      font-size: 16px;
-      cursor: pointer;
-      z-index: 1001;
+    /* 発火状態のクラス（不透明度 0.6） */
+    #gradient-overlay.active {
+      opacity: 0.6;
+      /* フェードイン時は瞬時に立ち上げる */
+      transition: opacity 0s;
     }
   </style>
 </head>
 <body>
 
-  <!-- グラデーション用要素 -->
-  <div id="gradientOverlay" class="gradient-overlay"></div>
+  <!-- 本番環境用グラデーションオーバーレイ -->
+  <div id="gradient-overlay"></div>
 
-  <!-- デモ用発火ボタン（テスト用） -->
-  <button class="demo-btn" onclick="triggerEffect()">紙吹雪＋グラデーション発火（テスト）</button>
+  <!-- 紙吹雪用キャンバス -->
+  <canvas id="canvas-container"></canvas>
+
+  <div class="ui-container">
+    <h1>お祝い画面</h1>
+    <button id="trigger-btn">紙吹雪を発火</button>
+  </div>
 
   <script>
-    // タイマー管理用変数
+    /* ==========================================
+       グラデーション演出の制御ロジック
+       ========================================== */
+    let fadeOutTimer = null;
     let fadeStartTimer = null;
-    let fadeEndTimer = null;
 
-    /**
-     * グラデーション発火関数
-     * 本番環境で「紙吹雪」を発火させる既存処理（イベントや関数）の中に
-     * この triggerGradientEffect() を一緒に呼び出すように組み込んでください。
-     */
-    function triggerGradientEffect() {
-      const overlay = document.getElementById('gradientOverlay');
+    function triggerGradient() {
+      const overlay = document.getElementById('gradient-overlay');
 
-      // 既存のタイマーをクリア（連続発火時にフェードアウトタイミングをリセット）
+      // 進行中のタイマーをクリア（連続発火時のリセット処理）
       if (fadeStartTimer) clearTimeout(fadeStartTimer);
-      if (fadeEndTimer) clearTimeout(fadeEndTimer);
+      if (fadeOutTimer) clearTimeout(fadeOutTimer);
 
-      // 一旦CSSトランジションを無効化して瞬時にopacity: 0.6に戻すためのリセット
-      overlay.style.transition = 'none';
-      overlay.classList.remove('active', 'fading-out');
-      
-      // リフローを強制してアニメーションを最初から再再生させる
-      void overlay.offsetWidth;
-
-      // アニメーション再生状態（不透明度0.6、下から上への移動）をセット
-      overlay.style.transition = 'opacity 1.5s ease-out';
+      // トランジションを一旦クリアして即座に不透明度0.6へ
+      overlay.style.transition = 'opacity 0s';
       overlay.classList.add('active');
 
-      // 1.5秒後にフェードアウトを開始（不透明度 0.6 -> 0）
+      // 1.5秒（1500ms）後からフェードアウトを開始
       fadeStartTimer = setTimeout(() => {
-        overlay.classList.add('fading-out');
+        // 1.5秒かけて0までフェードアウトさせる設定（合計3秒で完了）
+        overlay.style.transition = 'opacity 1.5s linear';
+        overlay.classList.remove('active');
       }, 1500);
-
-      // 3.0秒後に状態を完全にクリーンアップ
-      fadeEndTimer = setTimeout(() => {
-        overlay.classList.remove('active', 'fading-out');
-      }, 3000);
     }
 
-    // デモ用発火用ラッパー関数
-    function triggerTrigger() {
-      // 画面上の紙吹雪処理などをここに記述
-      // ...
+    /* ==========================================
+       紙吹雪ロジック（元のまま変更なし）
+       ========================================== */
+    const canvas = document.getElementById('canvas-container');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let confetti = [];
+    const colors = ['#ff4081', '#7c4dff', '#00e5ff', '#ffeb3b', '#76ff03'];
+
+    class ConfettiParticle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = -20;
+        this.size = Math.random() * 10 + 5;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.speedY = Math.random() * 3 + 2;
+        this.speedX = Math.random() * 2 - 1;
+        this.rotation = Math.random() * 360;
+        this.rotationSpeed = Math.random() * 10 - 5;
+        this.opacity = 1;
+      }
+
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.rotation += this.rotationSpeed;
+        this.opacity -= 0.005;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate((this.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(this.opacity, 0);
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+        ctx.restore();
+      }
+    }
+
+    function fireConfetti() {
+      // 紙吹雪パーティクルの追加
+      for (let i = 0; i < 80; i++) {
+        confetti.push(new ConfettiParticle());
+      }
+
+      // 紙吹雪と連動してグラデーションを発火
+      triggerGradient();
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // グラデーションを発火
-      triggerGradientEffect();
+      for (let i = confetti.length - 1; i >= 0; i--) {
+        confetti[i].update();
+        confetti[i].draw();
+        
+        if (confetti[i].opacity <= 0 || confetti[i].y > canvas.height) {
+          confetti.splice(i, 1);
+        }
+      }
+      
+      requestAnimationFrame(animate);
     }
-    
-    // ボタンクリック時の発火（デモ用）
-    function triggerEffect() {
-      triggerTrigger();
-    }
+    animate();
+
+    // ボタンクリック時の発火イベント
+    document.getElementById('trigger-btn').addEventListener('click', fireConfetti);
   </script>
 </body>
 </html>
