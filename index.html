@@ -193,21 +193,21 @@
     right: 0;
     top: 0;
     height: 200vh;
-    /* 上端（0%）と下端（100%）を全く同じ色(#ff4757)にしてシームレスに結合 */
+    /* 上端（0%）と下端（100%）を完璧に一致させチラつきを完全排除 */
     background: linear-gradient(
       0deg,
       rgba(255, 71, 87, 0.55) 0%,
-      rgba(255, 165, 2, 0.55) 16.6%,
-      rgba(255, 234, 167, 0.55) 33.3%,
+      rgba(255, 165, 2, 0.55) 16.66%,
+      rgba(255, 234, 167, 0.55) 33.33%,
       rgba(46, 213, 115, 0.55) 50%,
-      rgba(30, 144, 255, 0.55) 66.6%,
-      rgba(155, 89, 182, 0.55) 83.3%,
+      rgba(30, 144, 255, 0.55) 66.66%,
+      rgba(155, 89, 182, 0.55) 83.33%,
       rgba(255, 71, 87, 0.55) 100%
     );
-    /* 200vh分（画面2倍の高さ）をちょうど3秒で上にスクロール */
+    /* 常に裏でアニメーションを回し続けることで色の跳びを防止 */
     animation: moveUpBg 3s linear infinite;
     opacity: 0;
-    transition: opacity 1.5s linear;
+    transition: opacity 0.5s ease-out;
   }
   .rainbow-bg.active {
     opacity: 1;
@@ -226,7 +226,7 @@
     z-index: 201;
     perspective: 1000px;
     opacity: 1;
-    transition: opacity 1.5s linear;
+    transition: opacity 1s linear;
   }
   .confetti-container.fading {
     opacity: 0;
@@ -276,44 +276,48 @@
     gap: 16px;
   }
 
-  /* モーダル内の各設定セクション（同列化） */
+  /* モーダル内の各設定セクション（統一レイアウト） */
   .setting-section {
     display: flex;
     flex-direction: column;
+    gap: 10px;
   }
-  .setting-section h2 {
-    margin: 0 0 4px;
+  
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .setting-row h2 {
+    margin: 0;
     font-size: 16px;
     font-weight: 700 !important;
     color: var(--ink);
-  }
-  .setting-section p.desc {
-    margin: 0 0 12px;
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--sub);
   }
 
   .setting-divider {
     height: 1px;
     background-color: #efe5d8;
-    margin: 0;
+    margin: 2px 0;
   }
 
-  .sens-value-row{
-    text-align:center;
-    margin-bottom:4px;
+  /* 感度の入力コントロール */
+  .sens-control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .sens-num{
-    width:90px;
-    padding:0;
-    text-align:center;
-    font-size:30px;
-    font-weight:700 !important;
-    color:var(--accent);
-    border:none;
-    background:transparent;
-    appearance:textfield;
+    width: 48px;
+    padding: 2px 0;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700 !important;
+    color: var(--accent);
+    border: 1.5px solid #ebdcd0;
+    border-radius: 8px;
+    background: #ffffff;
+    appearance: textfield;
   }
   .sens-num::-webkit-outer-spin-button,
   .sens-num::-webkit-inner-spin-button{
@@ -321,36 +325,24 @@
     margin:0;
   }
   .sens-range-full{
-    display:block;
-    width:100%;
-    margin-bottom:6px;
-    accent-color:var(--accent);
+    width: 100%;
+    accent-color: var(--accent);
   }
   .sens-labels{
-    display:flex;
-    justify-content:space-between;
-    font-size:12px;
-    font-weight:400;
-    color:var(--sub);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--sub);
+    margin-top: -4px;
   }
 
-  /* トグルスイッチのレイアウト調整 */
-  .setting-toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 4px;
-  }
-  .toggle-label {
-    font-size: 15px;
-    font-weight: 700 !important;
-    color: var(--ink);
-  }
+  /* トグルスイッチ */
   .switch {
     position: relative;
     display: inline-block;
-    width: 50px;
-    height: 28px;
+    width: 48px;
+    height: 26px;
     flex-shrink: 0;
   }
   .switch input {
@@ -364,13 +356,13 @@
     inset: 0;
     background-color: #ccc;
     transition: .3s;
-    border-radius: 28px;
+    border-radius: 26px;
   }
   .slider:before {
     position: absolute;
     content: "";
-    height: 22px;
-    width: 22px;
+    height: 20px;
+    width: 20px;
     left: 3px;
     bottom: 3px;
     background-color: white;
@@ -436,12 +428,13 @@
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-card">
-      <!-- 設定 1: マイク感度 -->
+      <!-- 設定 1: マイク感度（横並びでシンプルに統一） -->
       <div class="setting-section">
-        <h2>マイク感度</h2>
-        <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
-        <div class="sens-value-row">
-          <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
+        <div class="setting-row">
+          <h2>マイク感度</h2>
+          <div class="sens-control-group">
+            <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
+          </div>
         </div>
         <input type="range" id="sensRange" class="sens-range-full" min="1" max="100" value="50">
         <div class="sens-labels">
@@ -452,12 +445,10 @@
 
       <div class="setting-divider"></div>
 
-      <!-- 設定 2: 紙吹雪・虹色演出（同列化） -->
+      <!-- 設定 2: 紙吹雪・虹色演出（同規格の横並びカード） -->
       <div class="setting-section">
-        <h2>紙吹雪・虹色演出</h2>
-        <p class="desc">音が大きくなったときのお祝い演出を表示します</p>
-        <div class="setting-toggle-row">
-          <span class="toggle-label">演出をオンにする</span>
+        <div class="setting-row">
+          <h2>紙吹雪・虹色演出</h2>
           <label class="switch">
             <input type="checkbox" id="confettiToggle" checked>
             <span class="slider"></span>
@@ -576,7 +567,7 @@
   const FADE_MS = 800;
   const PEAK_UPDATE_MARGIN = 0.005;
 
-  /* --- 演出管理 --- */
+  /* --- 演出フェード制御 --- */
   let fadeStartTimer = null;
   let fadeEndTimer = null;
   let lastConfettiTime = 0;
@@ -632,6 +623,7 @@
 
     const now = Date.now();
 
+    // 虹色は透明度の変更（フェードイン）のみで表示。背景の回転自体は一切リセットしない
     rainbowBg.classList.add('active');
     confettiContainer.classList.remove('fading');
     
@@ -640,6 +632,7 @@
       lastConfettiTime = now;
     }
 
+    // 連続で呼ばれた場合はフェードアウトのタイマーだけを更新・延長する
     if(fadeStartTimer) clearTimeout(fadeStartTimer);
     if(fadeEndTimer) clearTimeout(fadeEndTimer);
 
@@ -651,7 +644,7 @@
     fadeEndTimer = setTimeout(()=>{
       confettiContainer.innerHTML = '';
       lastConfettiTime = 0;
-    }, 3000);
+    }, 2500);
   }
 
   function bandAverage(b){
