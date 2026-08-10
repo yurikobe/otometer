@@ -183,14 +183,7 @@
     inset: 0;
     z-index: 200;
     pointer-events: none;
-    opacity: 0;
-    /* 発火時はパッと表示、終了時は1.0sかけてフェードアウト */
-    transition: opacity 1.0s ease-out;
     overflow: hidden;
-  }
-  .celebration-overlay.active {
-    opacity: 1;
-    transition: opacity 0.2s ease-in;
   }
 
   /* 虹色背景（アルファ値 0.6） */
@@ -208,7 +201,15 @@
       rgba(255, 71, 87, 0.6)
     );
     animation: rotateBg 3s linear infinite;
+    opacity: 0;
+    /* 発火時はすぐ表示、フェードアウト開始後は1.5秒かけて消滅 */
+    transition: opacity 1.5s linear;
   }
+  .rainbow-bg.active {
+    opacity: 1;
+    transition: opacity 0.15s ease-in;
+  }
+
   @keyframes rotateBg {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -219,25 +220,30 @@
     position: absolute;
     inset: 0;
     z-index: 201;
-    perspective: 800px;
+    perspective: 1000px;
+    opacity: 1;
+    transition: opacity 1.5s linear;
   }
+  .confetti-container.fading {
+    opacity: 0;
+  }
+
   .confetti-piece {
     position: absolute;
-    bottom: -10vh;
+    bottom: -5vh;
     width: 12px;
     height: 20px;
     border-radius: 2px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    /* 止まることなくスムーズに上へ通り抜けるイージング */
-    animation: burstUpContinuous forwards cubic-bezier(0.15, 0.85, 0.35, 1);
+    /* 一定のスピードで勢いよく最後まで飛び出す */
+    animation: burstAngle forwards linear;
   }
 
-  @keyframes burstUpContinuous {
+  @keyframes burstAngle {
     0% {
       transform: translateY(0) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
     }
     100% {
-      /* 画面上部を完全に突き抜けてフレームアウトする */
       transform: translateY(var(--ty)) translateX(var(--tx)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));
     }
   }
@@ -327,7 +333,7 @@
 
 <!-- 満点達成時のギミック用オーバーレイ -->
 <div class="celebration-overlay" id="celebrationOverlay">
-  <div class="rainbow-bg"></div>
+  <div class="rainbow-bg" id="rainbowBg"></div>
   <div class="confetti-container" id="confettiContainer"></div>
 </div>
 
@@ -390,7 +396,7 @@
   const sensRange = document.getElementById('sensRange');
   const sensNum = document.getElementById('sensNum');
   
-  const celebrationOverlay = document.getElementById('celebrationOverlay');
+  const rainbowBg = document.getElementById('rainbowBg');
   const confettiContainer = document.getElementById('confettiContainer');
 
   const minF = 80, maxF = 8000;
@@ -479,68 +485,87 @@
   const PEAK_UPDATE_MARGIN = 0.005;
 
   /* --- 演出管理 --- */
-  let isCelebrating = false;
-  let celebrationTimer = null;
-  let retriggerTimer = null;
+  let fadeStartTimer = null;
+  let fadeEndTimer = null;
+  let lastConfettiTime = 0;
 
-  function createConfettiBatch(){
+  function addConfettiBatch(){
     const colors = ['#ff4757', '#ffa502', '#ffea65', '#2ed573', '#1e90ff', '#9b59b6', '#ffffff'];
-    const pieceCount = 50;
+    const pieceCount = 45;
 
     for(let i=0; i<pieceCount; i++){
       const piece = document.createElement('div');
       piece.className = 'confetti-piece';
       
-      piece.style.left = (Math.random() * 100) + '%';
+      // X軸起点：画面横幅の3倍 (-100vw 〜 200vw)
+      const startX = (Math.random() * 300 - 100);
+      piece.style.left = startX + 'vw';
       piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
 
-      // 画面上部を確実に突っ切る高さ（-110vh〜-140vh）
-      const ty = -(Math.random() * 30 + 110) + 'vh';
-      const tx = (Math.random() * 200 - 100) + 'px'; 
+      // 発射角度：まっすぐ上(90deg) 〜 左右斜め75degの範囲 (15deg 〜 165deg)
+      const angleDeg = Math.random() * 150 + 15;
+      const angleRad = angleDeg * Math.PI / 180;
+
+      // 画面上部をしっかり突っ切る距離（120vh〜150vh）
+      const distanceVh = Math.random() * 30 + 120;
+      const ty = -distanceVh; // 上方向
+      // 角度に応じた横移動量
+      const tx = distanceVh / Math.tan(angleRad);
+
       const rx = (Math.random() * 1400 - 700) + 'deg';
       const ry = (Math.random() * 1400 - 700) + 'deg';
       const rz = (Math.random() * 720 - 360) + 'deg';
 
-      piece.style.setProperty('--ty', ty);
-      piece.style.setProperty('--tx', tx);
+      piece.style.setProperty('--ty', ty + 'vh');
+      piece.style.setProperty('--tx', tx + 'vh');
       piece.style.setProperty('--rx', rx);
       piece.style.setProperty('--ry', ry);
       piece.style.setProperty('--rz', rz);
 
-      // 少しバラつきをつけて連続的に舞い上がる（1.8秒〜2.5秒）
-      piece.style.animationDelay = (Math.random() * 0.25) + 's';
-      piece.style.animationDuration = (1.8 + Math.random() * 0.7) + 's';
+      // 垂直移動距離に応じた移動時間（直線3秒を基準に計算）
+      const duration = (distanceVh / 120) * (2.8 + Math.random() * 0.6);
+      piece.style.animationDuration = duration + 's';
+      piece.style.animationDelay = (Math.random() * 0.2) + 's';
 
       confettiContainer.appendChild(piece);
+
+      // アニメーション完了時に要素を自動削除（メモリ保護）
+      setTimeout(() => {
+        piece.remove();
+      }, (duration + 0.5) * 1000);
     }
   }
 
   function triggerCelebration(){
-    // 画面を表示状態にする
-    celebrationOverlay.classList.add('active');
+    const now = Date.now();
 
-    if(!isCelebrating){
-      isCelebrating = true;
-      confettiContainer.innerHTML = '';
-      createConfettiBatch();
-    } else {
-      createConfettiBatch();
+    // --- 1. 虹色背景の制御 ---
+    rainbowBg.classList.add('active');
+
+    // --- 2. 紙吹雪の制御 ---
+    confettiContainer.classList.remove('fading');
+    
+    // 初回発火、または前回発火から1秒以上経過していたら新しい紙吹雪を追加
+    if (now - lastConfettiTime >= 1000) {
+      addConfettiBatch();
+      lastConfettiTime = now;
     }
 
-    if(celebrationTimer) clearTimeout(celebrationTimer);
-    if(retriggerTimer) clearTimeout(retriggerTimer);
+    // --- 3. タイマーのリセット処理 ---
+    if(fadeStartTimer) clearTimeout(fadeStartTimer);
+    if(fadeEndTimer) clearTimeout(fadeEndTimer);
 
-    // 1.5秒間は連打再発火をガード
-    retriggerTimer = setTimeout(()=>{
-      isCelebrating = false;
+    // 最後の発火から1.5秒後にフェードアウトを開始
+    fadeStartTimer = setTimeout(()=>{
+      rainbowBg.classList.remove('active');
+      confettiContainer.classList.add('fading');
     }, 1500);
 
-    // 最後の発火から1.5秒経過後にフェードアウトを開始し、2.5秒で完全終了
-    celebrationTimer = setTimeout(()=>{
-      celebrationOverlay.classList.remove('active');
-      isCelebrating = false;
-      setTimeout(()=>{ confettiContainer.innerHTML = ''; }, 1000);
-    }, 1500);
+    // 最後の発火から3秒後に完全消滅
+    fadeEndTimer = setTimeout(()=>{
+      confettiContainer.innerHTML = '';
+      lastConfettiTime = 0;
+    }, 3000);
   }
 
   function bandAverage(b){
@@ -702,10 +727,12 @@
     peakLevel.fill(0);
     peakTime.fill(0);
     smoothLevel.fill(0);
-    if(celebrationTimer) clearTimeout(celebrationTimer);
-    if(retriggerTimer) clearTimeout(retriggerTimer);
-    celebrationOverlay.classList.remove('active');
-    isCelebrating = false;
+    if(fadeStartTimer) clearTimeout(fadeStartTimer);
+    if(fadeEndTimer) clearTimeout(fadeEndTimer);
+    rainbowBg.classList.remove('active');
+    confettiContainer.classList.add('fading');
+    confettiContainer.innerHTML = '';
+    lastConfettiTime = 0;
     micBtn.classList.remove('on');
     micBtn.setAttribute('aria-label','マイクをはじめる');
   }
