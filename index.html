@@ -177,6 +177,88 @@
     flex-shrink:0;
   }
 
+  /* --- 満点ギミック用オーバーレイ --- */
+  .celebration-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    overflow: hidden;
+  }
+  .celebration-overlay.active {
+    opacity: 1;
+  }
+
+  /* 虹色キラキラ光る背景 */
+  .rainbow-bg {
+    position: absolute;
+    inset: -50%;
+    background: conic-gradient(
+      from 0deg,
+      rgba(255,107,107,0.4),
+      rgba(255,217,61,0.4),
+      rgba(107,203,119,0.4),
+      rgba(77,150,255,0.4),
+      rgba(157,78,221,0.4),
+      rgba(255,107,107,0.4)
+    );
+    animation: rotateBg 2s linear infinite, flashBg 0.4s ease-in-out infinite alternate;
+  }
+  @keyframes rotateBg {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes flashBg {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+
+  /* ポップな「すごい！」テキスト */
+  .celebration-text {
+    position: relative;
+    z-index: 202;
+    font-size: 42px;
+    font-weight: 700 !important;
+    color: #ffffff;
+    text-shadow: 0 4px 0 #ff5c4c, 0 -4px 0 #ff5c4c, 4px 0 0 #ff5c4c, -4px 0 0 #ff5c4c, 0 8px 15px rgba(0,0,0,0.3);
+    animation: popBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate;
+    letter-spacing: 2px;
+  }
+  @keyframes popBounce {
+    0% { transform: scale(0.8) rotate(-3deg); }
+    100% { transform: scale(1.15) rotate(3deg); }
+  }
+
+  /* 紙吹雪パーティクル */
+  .confetti-container {
+    position: absolute;
+    inset: 0;
+    z-index: 201;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 12px;
+    height: 18px;
+    border-radius: 3px;
+    animation: fallConfetti 2.5s ease-out forwards;
+  }
+  @keyframes fallConfetti {
+    0% {
+      transform: translateY(-20px) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(720deg) scale(0.5);
+      opacity: 0;
+    }
+  }
+
   .modal-overlay{
     position:fixed;
     inset:0;
@@ -260,6 +342,13 @@
 </head>
 <body>
 
+<!-- 満点達成時のギミック用オーバーレイ -->
+<div class="celebration-overlay" id="celebrationOverlay">
+  <div class="rainbow-bg"></div>
+  <div class="confetti-container" id="confettiContainer"></div>
+  <div class="celebration-text">★ すごい！ ★</div>
+</div>
+
 <div class="phone">
   <button class="settings-btn" id="settingsBtn" aria-label="せってい">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
@@ -318,6 +407,9 @@
   const modalClose = document.getElementById('modalClose');
   const sensRange = document.getElementById('sensRange');
   const sensNum = document.getElementById('sensNum');
+  
+  const celebrationOverlay = document.getElementById('celebrationOverlay');
+  const confettiContainer = document.getElementById('confettiContainer');
 
   const minF = 80, maxF = 8000;
   const freqEdges = [];
@@ -404,6 +496,35 @@
   const FADE_MS = 800;
   const PEAK_UPDATE_MARGIN = 0.005;
 
+  /* --- 演出管理フラグ --- */
+  let isCelebrating = false;
+  let celebrationTimer = null;
+
+  function triggerCelebration(){
+    if(isCelebrating) return;
+    isCelebrating = true;
+    celebrationOverlay.classList.add('active');
+
+    // 紙吹雪を生成
+    confettiContainer.innerHTML = '';
+    const colors = ['#ff4d4d', '#ffcd3c', '#4dff88', '#38b6ff', '#ff66c4', '#ffffff'];
+    for(let i=0; i<45; i++){
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = (Math.random() * 0.6) + 's';
+      piece.style.animationDuration = (1.8 + Math.random() * 1.2) + 's';
+      confettiContainer.appendChild(piece);
+    }
+
+    // 3秒後に演出終了
+    celebrationTimer = setTimeout(()=>{
+      celebrationOverlay.classList.remove('active');
+      isCelebrating = false;
+    }, 3000);
+  }
+
   function bandAverage(b){
     const nyquist = audioCtx.sampleRate / 2;
     const binHz = nyquist / dataArray.length;
@@ -435,6 +556,7 @@
 
     const now = performance.now();
     const gate = currentGate();
+    let reachedTop = false;
 
     for(let b=0;b<NUM_BARS;b++){
       const raw = bandAverage(b);
@@ -454,6 +576,11 @@
       level = smoothLevel[b];
 
       let onSegs = Math.round(level * SEGMENTS);
+      
+      // いずれかのバーが最上段（16マス目）まで達したか判定
+      if(onSegs >= SEGMENTS){
+        reachedTop = true;
+      }
 
       const prevElapsed = now - peakTime[b];
       const prevFaded = prevElapsed > HOLD_MS + FADE_MS;
@@ -498,6 +625,12 @@
         }
       }
     }
+
+    // ゲージが一番上に届いたらギミック発動
+    if(reachedTop){
+      triggerCelebration();
+    }
+
     rafId = requestAnimationFrame(draw);
   }
 
@@ -553,6 +686,9 @@
     peakLevel.fill(0);
     peakTime.fill(0);
     smoothLevel.fill(0);
+    if(celebrationTimer) clearTimeout(celebrationTimer);
+    celebrationOverlay.classList.remove('active');
+    isCelebrating = false;
     micBtn.classList.remove('on');
     micBtn.setAttribute('aria-label','マイクをはじめる');
   }
