@@ -65,7 +65,7 @@
     flex:1;
     background:var(--card);
     padding:12px;
-    border-radius: 16px 0 0 16px; 
+    border-radius: 0;
     display:flex;
     flex-direction:column;
     min-height:0;
@@ -179,7 +179,7 @@
     flex-shrink:0;
   }
 
-  /* --- 紙吹雪演出用オーバーレイ --- */
+  /* 紙吹雪演出：画面全体に配置し、内部のpieceだけアニメーションさせる */
   .celebration-overlay {
     position: fixed;
     inset: 0;
@@ -215,7 +215,7 @@
     }
   }
 
-  /* --- 満点発火時の全画面グラデーション演出（紙吹雪のすぐ下に重ねる） --- */
+  /* 満点発火時の全画面グラデーション演出。紙吹雪のすぐ下に重ねて表示する */
   .celebration-gradient-overlay {
     position: fixed;
     inset: 0;
@@ -224,13 +224,13 @@
     opacity: 0;
     background: linear-gradient(
       180deg,
-      rgba(255, 71, 87, 1) 0%,
-      rgba(255, 165, 2, 1) 16.66%,
-      rgba(255, 234, 167, 1) 33.33%,
-      rgba(46, 213, 115, 0.75) 50%,
-      rgba(30, 144, 255, 0.75) 66.66%,
-      rgba(155, 89, 182, 0.75) 83.33%,
-      rgba(255, 71, 87, 0.75) 100%
+      rgba(255, 71, 87, 0.5) 0%,
+      rgba(255, 165, 2, 0.5) 16.66%,
+      rgba(255, 234, 167, 0.5) 33.33%,
+      rgba(46, 213, 115, 0.5) 50%,
+      rgba(30, 144, 255, 0.5) 66.66%,
+      rgba(155, 89, 182, 0.5) 83.33%,
+      rgba(255, 71, 87, 0.5) 100%
     );
     background-size: 100% 200%;
     animation: rainbowScroll 2s linear infinite;
@@ -243,6 +243,7 @@
     opacity: 0;
   }
 
+  /* グラデーションを下から上へ2秒周期でループさせる */
   @keyframes rainbowScroll {
     0% {
       background-position: 0 -200%;
@@ -282,13 +283,7 @@
     display: flex;
     flex-direction: column;
   }
-  
-  .setting-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
+
   .setting-section h2 {
     margin: 0;
     font-size: 17px;
@@ -351,7 +346,7 @@
     margin-top: 2px;
     padding: 0 2px;
   }
-  /* センタリング解除（左寄せ・自然なテキスト） */
+  /* 感度スライダー下の補足テキスト（左寄せ） */
   .sens-desc-bottom {
     margin-top: 8px;
     font-size: 12px;
@@ -361,7 +356,7 @@
     text-align: left;
   }
 
-  /* トグルスイッチおよびヘッダーの共通レイアウト（右寄せ配置） */
+  /* 設定項目のタイトルとトグル/数値を左右に配置する共通レイアウト */
   .setting-header-with-toggle {
     display: flex;
     align-items: center;
@@ -470,7 +465,6 @@
     <div class="modal-card">
       <!-- 設定 1: マイク感度 -->
       <div class="setting-section">
-        <!-- 紙吹雪ON/OFFと同じレイアウトでタイトルと「50」を左右配置 -->
         <div class="setting-header-with-toggle">
           <h2>マイク感度</h2>
           <div class="sens-value-display">
@@ -486,7 +480,6 @@
             <span>びんかん</span>
           </div>
 
-          <!-- 説明文（センタリングなし・左寄せ） -->
           <div class="sens-desc-bottom">
             数字が大きいほど、小さな音にも反応しやすくなります
           </div>
@@ -592,12 +585,12 @@
   let running = false;
 
   let sensitivity = 50;
-  const GATE_MARGIN_AT_MIN = 70;
-  const GATE_MARGIN_AT_MAX = 5;
-  const MIN_GATE_AT_MIN = 45;
-  const MIN_GATE_AT_MAX = 3;
-  const GAIN_AT_MIN = 0.55;
-  const GAIN_AT_MAX = 2.0;
+  const GATE_MARGIN_AT_MIN = 90;
+  const GATE_MARGIN_AT_MAX = 2;
+  const MIN_GATE_AT_MIN = 60;
+  const MIN_GATE_AT_MAX = 1;
+  const GAIN_AT_MIN = 0.4;
+  const GAIN_AT_MAX = 3.0;
 
   function currentGate(){
     const t = (sensitivity - 1) / 99;
@@ -620,12 +613,16 @@
   const FADE_MS = 800;
   const PEAK_UPDATE_MARGIN = 0.005;
 
-  /* --- 紙吹雪演出フェード制御 --- */
+  // 紙吹雪・全画面グラデーション演出共通のフェードタイミング
+  // 発火から CELEBRATION_FADE_START_MS 後にフェード開始、
+  // 発火から CELEBRATION_FADE_END_MS 後に完全に消える
+  const CELEBRATION_FADE_START_MS = 1000;
+  const CELEBRATION_FADE_END_MS = 2000;
+
   let fadeStartTimer = null;
   let fadeEndTimer = null;
   let lastConfettiTime = 0;
 
-  /* --- 全画面グラデーション演出フェード制御 --- */
   let gradientFadeStartTimer = null;
   let gradientFadeEndTimer = null;
 
@@ -687,11 +684,11 @@
     gradientFadeStartTimer = setTimeout(()=>{
       celebrationGradientOverlay.classList.add('fading');
       celebrationGradientOverlay.classList.remove('show');
-    }, 1000);
+    }, CELEBRATION_FADE_START_MS);
 
     gradientFadeEndTimer = setTimeout(()=>{
       celebrationGradientOverlay.classList.remove('fading');
-    }, 2000);
+    }, CELEBRATION_FADE_END_MS);
   }
 
   function resetGradientCelebration(){
@@ -720,12 +717,12 @@
 
     fadeStartTimer = setTimeout(()=>{
       confettiContainer.classList.add('fading');
-    }, 1000);
+    }, CELEBRATION_FADE_START_MS);
 
     fadeEndTimer = setTimeout(()=>{
       confettiContainer.innerHTML = '';
       lastConfettiTime = 0;
-    }, 2000);
+    }, CELEBRATION_FADE_END_MS);
 
     // 全画面グラデーション演出も同じタイミングで発火
     triggerGradientCelebration();
