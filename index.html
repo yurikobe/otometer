@@ -24,18 +24,15 @@
   }
   body{
     display:flex;
-    align-items:stretch;
-    justify-content:flex-start;
   }
-.phone{
-  width:100%;
-  height:100%;
-  min-height:100dvh;
-  display:flex;
-  flex-direction:column;
-  padding:0;
-  position:relative;
-}
+  .phone{
+    width:100%;
+    height:100%;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
 
   .title{
     text-align:center;
@@ -55,14 +52,13 @@
   }
 
   .card{
-  flex:1;
-  background:var(--card);
-  margin:0;
-  padding:12px;
-  display:flex;
-  flex-direction:column;
-  min-height:0;
-}
+    flex:1;
+    background:var(--card);
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
 
   .bars{
     flex:1;
@@ -87,14 +83,13 @@
   }
 
   .controls{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:2px;
-  margin:10px;
-  padding:0;
-  flex-shrink:0;
-}
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    margin:10px;
+    flex-shrink:0;
+  }
   .mic-btn{
     width:54px;
     height:54px;
@@ -139,8 +134,9 @@
     color:#e0724a;
     font-size:12px;
     text-align:center;
-    min-height:12px;
-    padding-top:2px;
+  }
+  .msg:empty{
+    display:none;
   }
 
   .settings-btn{
@@ -291,6 +287,8 @@
 (function(){
   const NUM_BARS = 14;
   const SEGMENTS = 16;
+  const OFF_COLOR = '#f1ece6';
+
   const barsContainer = document.getElementById('bars');
   const micBtn = document.getElementById('micBtn');
   const msg = document.getElementById('msg');
@@ -302,42 +300,39 @@
 
   const minF = 80, maxF = 8000;
   const freqEdges = [];
-  for(let i=0;i<=NUM_BARS;i++){
-    freqEdges.push(minF * Math.pow(maxF/minF, i/NUM_BARS));
+  for(let i = 0; i <= NUM_BARS; i++){
+    freqEdges.push(minF * Math.pow(maxF / minF, i / NUM_BARS));
   }
 
-  // 下から上へ5段階（緑→黄緑→黄→オレンジ→赤）
-  // 左右は中央のバーを純色として、左にいくほど黒混ざり、右にいくほど白混ざりになる
   const LEVELS = 5;
   const LEVEL_HUE = [142, 84, 48, 28, 4];
   const LEVEL_SAT = [58, 62, 88, 88, 78];
   const LEVEL_LIGHT = [48, 54, 58, 58, 56];
-  const BLACK_MIX_MAX = 0.4; // 左端でどれだけ黒に寄せるか(0〜1)
-  const WHITE_MIX_MAX = 0.4; // 右端でどれだけ白に寄せるか(0〜1)
+  const BLACK_MIX_MAX = 0.4;
+  const WHITE_MIX_MAX = 0.4;
 
   function segColor(barIndex, segIndexFromBottom){
-    const level = Math.min(LEVELS-1, Math.floor(segIndexFromBottom / SEGMENTS * LEVELS));
-    const t = NUM_BARS > 1 ? barIndex / (NUM_BARS - 1) : 0.5; // 0(左端)〜1(右端)
-    const dist = t - 0.5; // -0.5(左端) 〜 0(中央) 〜 +0.5(右端)
+    const level = Math.min(LEVELS - 1, Math.floor(segIndexFromBottom / SEGMENTS * LEVELS));
+    const t = NUM_BARS > 1 ? barIndex / (NUM_BARS - 1) : 0.5;
+    const dist = t - 0.5;
     const baseL = LEVEL_LIGHT[level];
     let l;
     if(dist <= 0){
-      const factor = (-dist) / 0.5; // 中央0 → 左端1
+      const factor = (-dist) / 0.5;
       l = baseL * (1 - factor * BLACK_MIX_MAX);
     } else {
-      const factor = dist / 0.5; // 中央0 → 右端1
+      const factor = dist / 0.5;
       l = baseL + (100 - baseL) * factor * WHITE_MIX_MAX;
     }
     return `hsl(${LEVEL_HUE[level]}, ${LEVEL_SAT[level]}%, ${l}%)`;
   }
 
-  const OFF_COLOR = '#f1ece6';
   const segEls = [];
-  for(let b=0;b<NUM_BARS;b++){
+  for(let b = 0; b < NUM_BARS; b++){
     const barEl = document.createElement('div');
     barEl.className = 'bar';
     const segs = [];
-    for(let s=0;s<SEGMENTS;s++){
+    for(let s = 0; s < SEGMENTS; s++){
       const segEl = document.createElement('div');
       segEl.className = 'seg';
       barEl.appendChild(segEl);
@@ -348,10 +343,9 @@
   }
 
   function resetBars(){
-    segEls.forEach(segs=>{
-      segs.forEach(seg=>{
-        seg.style.background = '#f1ece6';
-        seg.style.opacity = '1';
+    segEls.forEach(segs => {
+      segs.forEach(seg => {
+        seg.style.background = OFF_COLOR;
       });
     });
   }
@@ -359,58 +353,57 @@
   let audioCtx, analyser, source, stream, dataArray, rafId;
   let running = false;
 
-  // マイク感度（1〜100、大きいほど小さな音にも反応する）
   let sensitivity = 50;
-  const GATE_MARGIN_AT_MIN = 70; // 感度1のときのしきい値（にぶい）
-  const GATE_MARGIN_AT_MAX = 5;  // 感度100のときのしきい値（びんかん）
+  const GATE_MARGIN_AT_MIN = 70;
+  const GATE_MARGIN_AT_MAX = 5;
   const MIN_GATE_AT_MIN = 45;
   const MIN_GATE_AT_MAX = 3;
-  const GAIN_AT_MIN = 0.55;      // 感度1のときの増幅率（ふつうの声でも上がりにくい）
-  const GAIN_AT_MAX = 2.0;       // 感度100のときの増幅率（ふつうの声でもよく上がる）
+  const GAIN_AT_MIN = 0.55;
+  const GAIN_AT_MAX = 2.0;
 
   function currentGate(){
-    const t = (sensitivity - 1) / 99; // 0(にぶい)〜1(びんかん)
+    const t = (sensitivity - 1) / 99;
     return {
       margin: GATE_MARGIN_AT_MIN + (GATE_MARGIN_AT_MAX - GATE_MARGIN_AT_MIN) * t,
       min: MIN_GATE_AT_MIN + (MIN_GATE_AT_MAX - MIN_GATE_AT_MIN) * t,
       gain: GAIN_AT_MIN + (GAIN_AT_MAX - GAIN_AT_MIN) * t
     };
   }
-  let noiseFloor = new Array(NUM_BARS).fill(0);
-  const smoothLevel = new Array(NUM_BARS).fill(0); // 立ち上がり速・下降ゆっくりの平滑化用
-  const RELEASE = 0.25; // 下降時の追従の速さ（小さいほどゆっくり）
+
+  const noiseFloor = new Array(NUM_BARS).fill(0);
+  const smoothLevel = new Array(NUM_BARS).fill(0);
+  const RELEASE = 0.25;
   let calibrating = false;
   let calibrateFrames = 0;
-  const CALIBRATE_TOTAL_FRAMES = 40; // 起動直後、約0.6〜0.7秒で周囲の音を測定
+  const CALIBRATE_TOTAL_FRAMES = 40;
 
-  const peakLevel = new Array(NUM_BARS).fill(0);  // 0〜1、これまでの最大レベル
-  const peakTime = new Array(NUM_BARS).fill(0);   // そのピークに達した時刻
-  const HOLD_MS = 800;  // ピークがその場にとどまる時間
-  const FADE_MS = 800;  // その後ふわっと消えるまでの時間
-  const PEAK_UPDATE_MARGIN = 0.005; // これ以上高くなった時だけピークを更新
-  const bandAvgBuf = new Array(NUM_BARS).fill(0);
+  const peakLevel = new Array(NUM_BARS).fill(0);
+  const peakTime = new Array(NUM_BARS).fill(0);
+  const HOLD_MS = 800;
+  const FADE_MS = 800;
+  const PEAK_UPDATE_MARGIN = 0.005;
 
   function bandAverage(b){
     const nyquist = audioCtx.sampleRate / 2;
     const binHz = nyquist / dataArray.length;
-    const f0 = freqEdges[b], f1 = freqEdges[b+1];
-    const i0 = Math.max(0, Math.floor(f0/binHz));
-    const i1 = Math.min(dataArray.length-1, Math.ceil(f1/binHz));
-    let sum=0, count=0;
-    for(let i=i0;i<=i1;i++){ sum += dataArray[i]; count++; }
-    return count>0 ? sum/count : 0;
+    const f0 = freqEdges[b], f1 = freqEdges[b + 1];
+    const i0 = Math.max(0, Math.floor(f0 / binHz));
+    const i1 = Math.min(dataArray.length - 1, Math.ceil(f1 / binHz));
+    let sum = 0, count = 0;
+    for(let i = i0; i <= i1; i++){ sum += dataArray[i]; count++; }
+    return count > 0 ? sum / count : 0;
   }
 
   function draw(){
     analyser.getByteFrequencyData(dataArray);
 
     if(calibrating){
-      for(let b=0;b<NUM_BARS;b++){
+      for(let b = 0; b < NUM_BARS; b++){
         noiseFloor[b] += bandAverage(b);
       }
       calibrateFrames++;
       if(calibrateFrames >= CALIBRATE_TOTAL_FRAMES){
-        for(let b=0;b<NUM_BARS;b++){
+        for(let b = 0; b < NUM_BARS; b++){
           noiseFloor[b] = noiseFloor[b] / CALIBRATE_TOTAL_FRAMES;
         }
         calibrating = false;
@@ -422,7 +415,7 @@
     const now = performance.now();
     const gate = currentGate();
 
-    for(let b=0;b<NUM_BARS;b++){
+    for(let b = 0; b < NUM_BARS; b++){
       const raw = bandAverage(b);
       const gateLevel = Math.max(noiseFloor[b] + gate.margin, gate.min);
       let adjusted = raw - gateLevel;
@@ -432,8 +425,6 @@
       level = Math.min(1, level * gate.gain);
       level = Math.min(1, Math.pow(level, 1.15));
 
-      // 立ち上がりは即座に、下がるときはゆっくり追従させて、
-      // 無音付近での微小なジッター（チカチカの原因）を吸収する
       if(level > smoothLevel[b]){
         smoothLevel[b] = level;
       } else {
@@ -441,54 +432,43 @@
       }
       level = smoothLevel[b];
 
-      let onSegs = Math.round(level * SEGMENTS);
-
-      // ピーク位置は時間ベースで管理。
-      // 同程度のレベルでは更新しないことで、保持中・フェード中のチラつきを防ぐ。
+      const onSegs = Math.round(level * SEGMENTS);
       const prevElapsed = now - peakTime[b];
       const prevFaded = prevElapsed > HOLD_MS + FADE_MS;
 
       if(prevFaded){
-        // 完全に消えた後は、次の音を新しいピークとして受け付ける。
         peakLevel[b] = level;
         peakTime[b] = now;
       } else if(level > peakLevel[b] + PEAK_UPDATE_MARGIN){
-        // 現在のピークを明確に上回った時だけ更新する。
         peakLevel[b] = level;
         peakTime[b] = now;
       }
 
       const elapsed = now - peakTime[b];
-      let peakOpacityVal;
+      let peakOpacityVal = 0;
       if(elapsed <= HOLD_MS){
         peakOpacityVal = 1;
       } else if(elapsed <= HOLD_MS + FADE_MS){
         peakOpacityVal = 1 - (elapsed - HOLD_MS) / FADE_MS;
-      } else {
-        peakOpacityVal = 0;
       }
       const peakSeg = Math.floor(peakLevel[b] * SEGMENTS) - 1;
 
       const segs = segEls[b];
-      for(let s=0;s<SEGMENTS;s++){
+      for(let s = 0; s < SEGMENTS; s++){
         const seg = segs[s];
         const isOn = s < onSegs;
         const isPeak = !isOn && s === peakSeg && peakSeg >= onSegs && peakOpacityVal > 0;
+
         if(isOn){
           seg.style.background = segColor(b, s);
-          seg.style.opacity = '1';
         } else if(isPeak){
-          // 透明度で重ねるのではなく、色そのものを消灯色へ直接ブレンドする
-          // （opacityで消すと背後の要素が透けて一瞬白っぽく見えるため）
           const vivid = segColor(b, s);
-          const pct = Math.round(peakOpacityVal*100);
+          const pct = Math.round(peakOpacityVal * 100);
           seg.style.background = pct <= 1
             ? OFF_COLOR
             : `color-mix(in oklab, ${vivid} ${pct}%, ${OFF_COLOR})`;
-          seg.style.opacity = '1';
         } else {
-          seg.style.background = '#f1ece6';
-          seg.style.opacity = '1';
+          seg.style.background = OFF_COLOR;
         }
       }
     }
@@ -541,7 +521,7 @@
     running = false;
     calibrating = false;
     if(rafId) cancelAnimationFrame(rafId);
-    if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+    if(stream){ stream.getTracks().forEach(t => t.stop()); }
     if(audioCtx){ audioCtx.close(); }
     resetBars();
     peakLevel.fill(0);
