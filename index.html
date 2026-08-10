@@ -186,28 +186,27 @@
     overflow: hidden;
   }
 
-  /* 虹色背景（下から上への移動 animation） */
+  /* シームレスな虹色背景（シームレスループ） */
   .rainbow-bg {
     position: absolute;
     inset: 0;
-    height: 300%;
+    height: 200%;
     top: 0;
+    /* 端と端の色を完全に一致させた滑らかなグラデーションパターン */
     background: linear-gradient(
       0deg,
-      rgba(255, 71, 87, 0.6),
-      rgba(255, 165, 2, 0.6),
-      rgba(255, 234, 167, 0.6),
-      rgba(46, 213, 115, 0.6),
-      rgba(30, 144, 255, 0.6),
-      rgba(155, 89, 182, 0.6),
-      rgba(255, 71, 87, 0.6),
-      rgba(255, 165, 2, 0.6),
-      rgba(255, 234, 167, 0.6),
-      rgba(46, 213, 115, 0.6)
+      rgba(255, 71, 87, 0.55),
+      rgba(255, 165, 2, 0.55),
+      rgba(255, 234, 167, 0.55),
+      rgba(46, 213, 115, 0.55),
+      rgba(30, 144, 255, 0.55),
+      rgba(155, 89, 182, 0.55),
+      rgba(255, 71, 87, 0.55)
     );
-    animation: moveUpBg 3s linear infinite;
+    background-size: 100% 50%;
+    background-repeat: repeat-y;
+    animation: moveUpBg 4s linear infinite;
     opacity: 0;
-    /* 発火時はすぐ表示、フェードアウト開始後は1.5秒かけて消滅 */
     transition: opacity 1.5s linear;
   }
   .rainbow-bg.active {
@@ -280,7 +279,7 @@
     color:var(--ink);
   }
   .modal-card p.desc{
-    margin:0 0 18px;
+    margin:0 0 16px;
     font-size:14px;
     font-weight:400;
     color:var(--sub);
@@ -317,8 +316,60 @@
     font-size:14px;
     font-weight:400;
     color:var(--sub);
-    margin-bottom:20px;
+    margin-bottom:18px;
   }
+
+  /* --- トグルスイッチ領域 --- */
+  .setting-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-top: 1px solid #efe5d8;
+    margin-bottom: 18px;
+  }
+  .toggle-label {
+    font-size: 14px;
+    font-weight: 500 !important;
+    color: var(--ink);
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #ccc;
+    transition: .3s;
+    border-radius: 26px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+  input:checked + .slider {
+    background-color: var(--accent);
+  }
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+
   .modal-close{
     width:100%;
     padding:12px;
@@ -342,7 +393,7 @@
 </div>
 
 <div class="phone">
-  <button class="settings-btn" id="settingsBtn" aria-label="せってい">
+  <button class="settings-btn" id="settingsBtn" aria-label="設定">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
@@ -358,7 +409,7 @@
   </div>
 
   <div class="controls">
-    <button class="mic-btn" id="micBtn" aria-label="マイクをはじめる">
+    <button class="mic-btn" id="micBtn" aria-label="マイクをONにする">
       <div class="ring"></div>
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Z" fill="white"/>
@@ -380,6 +431,16 @@
         <span>にぶい</span>
         <span>びんかん</span>
       </div>
+
+      <!-- 紙吹雪・演出ON/OFFのスイッチ -->
+      <div class="setting-toggle-row">
+        <span class="toggle-label">紙吹雪・虹色演出</span>
+        <label class="switch">
+          <input type="checkbox" id="confettiToggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
       <button class="modal-close" id="modalClose">とじる</button>
     </div>
   </div>
@@ -399,9 +460,12 @@
   const modalClose = document.getElementById('modalClose');
   const sensRange = document.getElementById('sensRange');
   const sensNum = document.getElementById('sensNum');
+  const confettiToggle = document.getElementById('confettiToggle');
   
   const rainbowBg = document.getElementById('rainbowBg');
   const confettiContainer = document.getElementById('confettiContainer');
+
+  let confettiEnabled = true;
 
   const minF = 80, maxF = 8000;
   const freqEdges = [];
@@ -495,28 +559,24 @@
 
   function addConfettiBatch(){
     const colors = ['#ff4757', '#ffa502', '#ffea65', '#2ed573', '#1e90ff', '#9b59b6', '#ffffff'];
-    const pieceCount = 100; // 紙吹雪の数を増量（45 → 100枚）
+    const pieceCount = 100;
 
-    // 画面下から上まで垂直に飛ぶ場合の標準速度（移動距離120vhを3秒で移動）
     const baseVerticalVh = 120;
-    const baseTime = 3.0; // 秒
+    const baseTime = 3.0;
 
     for(let i=0; i<pieceCount; i++){
       const piece = document.createElement('div');
       piece.className = 'confetti-piece';
       
-      // X軸起点：画面横幅の3倍 (-100vw 〜 200vw)
       const startX = (Math.random() * 300 - 100);
       piece.style.left = startX + 'vw';
       piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
 
-      // 発射角度：垂直(90deg) 〜 左右斜め75degの範囲 (15deg 〜 165deg)
       const angleDeg = Math.random() * 150 + 15;
       const angleRad = angleDeg * Math.PI / 180;
 
-      // 画面上部をしっかり突っ切る垂直到達距離 (120vh〜150vh)
-      const ty = -(Math.random() * 30 + 120); // 負の方向（上へ）
-      const tx = (-ty) / Math.tan(angleRad);  // X方向の移動量
+      const ty = -(Math.random() * 30 + 120);
+      const tx = (-ty) / Math.tan(angleRad);
 
       const rx = (Math.random() * 1400 - 700) + 'deg';
       const ry = (Math.random() * 1400 - 700) + 'deg';
@@ -528,10 +588,8 @@
       piece.style.setProperty('--ry', ry);
       piece.style.setProperty('--rz', rz);
 
-      // --- 移動速度の計算（三平方の定理で移動距離に応じた一律速度を維持） ---
       const actualDistance = Math.sqrt(tx * tx + ty * ty);
-      // 基準速度（distance/baseTime）に合わせ、さらに0.8〜1.2倍のランダムな速度の揺らぎを与える
-      const speedFactor = 0.8 + Math.random() * 0.4; // 0.8 ～ 1.2
+      const speedFactor = 0.8 + Math.random() * 0.4;
       const duration = (actualDistance / (baseVerticalVh / baseTime)) / speedFactor;
 
       piece.style.animationDuration = duration + 's';
@@ -539,7 +597,6 @@
 
       confettiContainer.appendChild(piece);
 
-      // アニメーション完了時に要素を自動削除
       setTimeout(() => {
         piece.remove();
       }, (duration + 0.5) * 1000);
@@ -547,31 +604,27 @@
   }
 
   function triggerCelebration(){
+    // オフになっている場合は演出を発動しない
+    if(!confettiEnabled) return;
+
     const now = Date.now();
 
-    // --- 1. 虹色背景の制御 ---
     rainbowBg.classList.add('active');
-
-    // --- 2. 紙吹雪の制御 ---
     confettiContainer.classList.remove('fading');
     
-    // 初回発火、または前回発火から1秒以上経過していたら新しい紙吹雪を追加
     if (now - lastConfettiTime >= 1000) {
       addConfettiBatch();
       lastConfettiTime = now;
     }
 
-    // --- 3. タイマーのリセット処理 ---
     if(fadeStartTimer) clearTimeout(fadeStartTimer);
     if(fadeEndTimer) clearTimeout(fadeEndTimer);
 
-    // 最後の発火から1.5秒後にフェードアウトを開始
     fadeStartTimer = setTimeout(()=>{
       rainbowBg.classList.remove('active');
       confettiContainer.classList.add('fading');
     }, 1500);
 
-    // 最後の発火から3秒後に完全消滅
     fadeEndTimer = setTimeout(()=>{
       confettiContainer.innerHTML = '';
       lastConfettiTime = 0;
@@ -754,6 +807,7 @@
   function openModal(){
     sensRange.value = String(sensitivity);
     sensNum.value = String(sensitivity);
+    confettiToggle.checked = confettiEnabled;
     modalOverlay.classList.add('open');
   }
   function closeModal(){
@@ -775,6 +829,11 @@
   });
   sensRange.addEventListener('input', ()=> setSensitivity(sensRange.value));
   sensNum.addEventListener('input', ()=> setSensitivity(sensNum.value));
+  
+  // 紙吹雪・演出トグルの切り替えイベント
+  confettiToggle.addEventListener('change', (e)=>{
+    confettiEnabled = e.target.checked;
+  });
 
   resetBars();
 })();
