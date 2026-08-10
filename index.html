@@ -186,26 +186,26 @@
     overflow: hidden;
   }
 
-  /* シームレスな虹色背景（シームレスループ） */
+  /* 高さ2倍（200vh）の完全シームレス虹色背景 */
   .rainbow-bg {
     position: absolute;
-    inset: 0;
-    height: 200%;
+    left: 0;
+    right: 0;
     top: 0;
-    /* 端と端の色を完全に一致させた滑らかなグラデーションパターン */
+    height: 200vh;
+    /* 上端（0%）と下端（100%）を全く同じ色(#ff4757)にしてシームレスに結合 */
     background: linear-gradient(
       0deg,
-      rgba(255, 71, 87, 0.55),
-      rgba(255, 165, 2, 0.55),
-      rgba(255, 234, 167, 0.55),
-      rgba(46, 213, 115, 0.55),
-      rgba(30, 144, 255, 0.55),
-      rgba(155, 89, 182, 0.55),
-      rgba(255, 71, 87, 0.55)
+      rgba(255, 71, 87, 0.55) 0%,
+      rgba(255, 165, 2, 0.55) 16.6%,
+      rgba(255, 234, 167, 0.55) 33.3%,
+      rgba(46, 213, 115, 0.55) 50%,
+      rgba(30, 144, 255, 0.55) 66.6%,
+      rgba(155, 89, 182, 0.55) 83.3%,
+      rgba(255, 71, 87, 0.55) 100%
     );
-    background-size: 100% 50%;
-    background-repeat: repeat-y;
-    animation: moveUpBg 4s linear infinite;
+    /* 200vh分（画面2倍の高さ）をちょうど3秒で上にスクロール */
+    animation: moveUpBg 3s linear infinite;
     opacity: 0;
     transition: opacity 1.5s linear;
   }
@@ -215,8 +215,8 @@
   }
 
   @keyframes moveUpBg {
-    0% { transform: translateY(0%); }
-    100% { transform: translateY(-50%); }
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-100vh); }
   }
 
   /* 紙吹雪コンテナ */
@@ -267,32 +267,48 @@
   .modal-card{
     background:#fffaf3;
     border-radius:24px;
-    padding:26px 22px 22px;
+    padding:24px 20px 20px;
     width:100%;
     max-width:320px;
     box-shadow:0 16px 40px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
-  .modal-card h2{
-    margin:0 0 4px;
-    font-size:18px;
-    font-weight:700 !important;
-    color:var(--ink);
+
+  /* モーダル内の各設定セクション（同列化） */
+  .setting-section {
+    display: flex;
+    flex-direction: column;
   }
-  .modal-card p.desc{
-    margin:0 0 16px;
-    font-size:14px;
-    font-weight:400;
-    color:var(--sub);
+  .setting-section h2 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700 !important;
+    color: var(--ink);
   }
+  .setting-section p.desc {
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--sub);
+  }
+
+  .setting-divider {
+    height: 1px;
+    background-color: #efe5d8;
+    margin: 0;
+  }
+
   .sens-value-row{
     text-align:center;
-    margin-bottom:8px;
+    margin-bottom:4px;
   }
   .sens-num{
     width:90px;
-    padding:2px 4px;
+    padding:0;
     text-align:center;
-    font-size:34px;
+    font-size:30px;
     font-weight:700 !important;
     color:var(--accent);
     border:none;
@@ -307,37 +323,35 @@
   .sens-range-full{
     display:block;
     width:100%;
-    margin-bottom:8px;
+    margin-bottom:6px;
     accent-color:var(--accent);
   }
   .sens-labels{
     display:flex;
     justify-content:space-between;
-    font-size:14px;
+    font-size:12px;
     font-weight:400;
     color:var(--sub);
-    margin-bottom:18px;
   }
 
-  /* --- トグルスイッチ領域 --- */
+  /* トグルスイッチのレイアウト調整 */
   .setting-toggle-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 0;
-    border-top: 1px solid #efe5d8;
-    margin-bottom: 18px;
+    padding-top: 4px;
   }
   .toggle-label {
-    font-size: 14px;
-    font-weight: 500 !important;
+    font-size: 15px;
+    font-weight: 700 !important;
     color: var(--ink);
   }
   .switch {
     position: relative;
     display: inline-block;
-    width: 48px;
-    height: 26px;
+    width: 50px;
+    height: 28px;
+    flex-shrink: 0;
   }
   .switch input {
     opacity: 0;
@@ -350,13 +364,13 @@
     inset: 0;
     background-color: #ccc;
     transition: .3s;
-    border-radius: 26px;
+    border-radius: 28px;
   }
   .slider:before {
     position: absolute;
     content: "";
-    height: 20px;
-    width: 20px;
+    height: 22px;
+    width: 22px;
     left: 3px;
     bottom: 3px;
     background-color: white;
@@ -381,6 +395,7 @@
     font-weight:500 !important;
     letter-spacing:1px;
     cursor:pointer;
+    margin-top: 4px;
   }
 </style>
 </head>
@@ -393,7 +408,7 @@
 </div>
 
 <div class="phone">
-  <button class="settings-btn" id="settingsBtn" aria-label="設定">
+  <button class="settings-btn" id="settingsBtn" aria-label="せってい">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
@@ -409,7 +424,7 @@
   </div>
 
   <div class="controls">
-    <button class="mic-btn" id="micBtn" aria-label="マイクをONにする">
+    <button class="mic-btn" id="micBtn" aria-label="マイク">
       <div class="ring"></div>
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Z" fill="white"/>
@@ -421,24 +436,33 @@
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-card">
-      <h2>マイク感度</h2>
-      <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
-      <div class="sens-value-row">
-        <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
-      </div>
-      <input type="range" id="sensRange" class="sens-range-full" min="1" max="100" value="50">
-      <div class="sens-labels">
-        <span>にぶい</span>
-        <span>びんかん</span>
+      <!-- 設定 1: マイク感度 -->
+      <div class="setting-section">
+        <h2>マイク感度</h2>
+        <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
+        <div class="sens-value-row">
+          <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
+        </div>
+        <input type="range" id="sensRange" class="sens-range-full" min="1" max="100" value="50">
+        <div class="sens-labels">
+          <span>にぶい</span>
+          <span>びんかん</span>
+        </div>
       </div>
 
-      <!-- 紙吹雪・演出ON/OFFのスイッチ -->
-      <div class="setting-toggle-row">
-        <span class="toggle-label">紙吹雪・虹色演出</span>
-        <label class="switch">
-          <input type="checkbox" id="confettiToggle" checked>
-          <span class="slider"></span>
-        </label>
+      <div class="setting-divider"></div>
+
+      <!-- 設定 2: 紙吹雪・虹色演出（同列化） -->
+      <div class="setting-section">
+        <h2>紙吹雪・虹色演出</h2>
+        <p class="desc">音が大きくなったときのお祝い演出を表示します</p>
+        <div class="setting-toggle-row">
+          <span class="toggle-label">演出をオンにする</span>
+          <label class="switch">
+            <input type="checkbox" id="confettiToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
 
       <button class="modal-close" id="modalClose">とじる</button>
@@ -604,7 +628,6 @@
   }
 
   function triggerCelebration(){
-    // オフになっている場合は演出を発動しない
     if(!confettiEnabled) return;
 
     const now = Date.now();
@@ -764,7 +787,7 @@
       noiseFloor.fill(0);
       smoothLevel.fill(0);
       micBtn.classList.add('on');
-      micBtn.setAttribute('aria-label','マイクをとめる');
+      micBtn.setAttribute('aria-label','マイク');
       draw();
     }catch(err){
       console.error(err);
@@ -797,7 +820,7 @@
     confettiContainer.innerHTML = '';
     lastConfettiTime = 0;
     micBtn.classList.remove('on');
-    micBtn.setAttribute('aria-label','マイクをはじめる');
+    micBtn.setAttribute('aria-label','マイク');
   }
 
   micBtn.addEventListener('click', ()=>{
@@ -830,7 +853,6 @@
   sensRange.addEventListener('input', ()=> setSensitivity(sensRange.value));
   sensNum.addEventListener('input', ()=> setSensitivity(sensNum.value));
   
-  // 紙吹雪・演出トグルの切り替えイベント
   confettiToggle.addEventListener('change', (e)=>{
     confettiEnabled = e.target.checked;
   });
