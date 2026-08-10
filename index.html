@@ -39,8 +39,39 @@
     min-height:100dvh;
     display:flex;
     flex-direction:column;
-    padding:0;
+    padding:0 0 0 10px; /* 左側に常時ライン用のスペースを確保 */
     position:relative;
+  }
+
+  /* --- 常時表示の虹色ライン（画面左端10px） --- */
+  .permanent-rainbow-line {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 100vh;
+    z-index: 100;
+    overflow: hidden;
+  }
+  .rainbow-scroll-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 200vh; /* 高さ2倍 */
+    /* シームレスなグラデーション配置 */
+    background: linear-gradient(
+      0deg,
+      rgba(255, 71, 87, 1) 0%,
+      rgba(255, 165, 2, 1) 16.666%,
+      rgba(255, 234, 167, 1) 33.333%,
+      rgba(46, 213, 115, 1) 50%,
+      rgba(30, 144, 255, 1) 66.666%,
+      rgba(155, 89, 182, 1) 83.333%,
+      rgba(255, 71, 87, 1) 100%
+    );
+    /* 3秒で画面1倍分（100vh）上にスクロール＝常時シームレスループ */
+    animation: moveUpBg 3s linear infinite;
   }
 
   .title{
@@ -65,9 +96,11 @@
     flex:1;
     background:var(--card);
     padding:12px;
+    border-radius: 16px 0 0 16px; /* 右側は直線、左側は丸く */
     display:flex;
     flex-direction:column;
     min-height:0;
+    box-shadow: -2px 2px 10px rgba(90,74,63,0.05);
   }
 
   .bars{
@@ -167,7 +200,7 @@
     align-items:center;
     justify-content:center;
     cursor:pointer;
-    z-index:10;
+    z-index:110; /* 常時ラインより上に */
     padding:0;
   }
   .settings-btn svg{
@@ -177,62 +210,24 @@
     flex-shrink:0;
   }
 
-  /* --- 満点ギミック用オーバーレイ --- */
+  /* --- 満点達成時の紙吹雪演出用（常時ラインとは別、画面全体） --- */
   .celebration-overlay {
     position: fixed;
     inset: 0;
-    z-index: 200;
+    z-index: 200; /* 最前面 */
     pointer-events: none;
     overflow: hidden;
   }
-
-  /* 高さ2倍（200vh）の「完全シームレス」虹色背景 */
-  .rainbow-bg {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 200vh;
-    /* 上端（0%）と下端（100%）を完璧に一致させ、チラつきを完全に排除 */
-    background: linear-gradient(
-      0deg,
-      rgba(255, 71, 87, 0.55) 0%,
-      rgba(255, 165, 2, 0.55) 16.66%,
-      rgba(255, 234, 167, 0.55) 33.33%,
-      rgba(46, 213, 115, 0.55) 50%,
-      rgba(30, 144, 255, 0.55) 66.66%,
-      rgba(155, 89, 182, 0.55) 83.33%,
-      rgba(255, 71, 87, 0.55) 100%
-    );
-    /* 常に裏でアニメーションを回し続けることで色の跳びを防止 */
-    animation: moveUpBg 3s linear infinite;
-    opacity: 0;
-    transition: opacity 0.5s ease-out;
-    will-change: transform;
-  }
-  .rainbow-bg.active {
-    opacity: 1;
-    transition: opacity 0.15s ease-in;
-  }
-
-  @keyframes moveUpBg {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-100vh); }
-  }
-
   /* 紙吹雪コンテナ */
   .confetti-container {
     position: absolute;
     inset: 0;
-    z-index: 201;
-    perspective: 1000px;
     opacity: 1;
     transition: opacity 1s linear;
   }
   .confetti-container.fading {
     opacity: 0;
   }
-
   .confetti-piece {
     position: absolute;
     bottom: -5vh;
@@ -252,6 +247,12 @@
     }
   }
 
+  /* 背景スクロールアニメーション（共通） */
+  @keyframes moveUpBg {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-100vh); }
+  }
+
   .modal-overlay{
     position:fixed;
     inset:0;
@@ -259,7 +260,7 @@
     display:none;
     align-items:center;
     justify-content:center;
-    z-index:100;
+    z-index:300; /* 最前面 */
     padding:20px;
   }
   .modal-overlay.open{
@@ -277,23 +278,30 @@
     gap: 16px;
   }
 
-  /* モーダル内の各設定セクション（統一レイアウト） */
+  /* モーダル内の各設定セクション */
   .setting-section {
     display: flex;
     flex-direction: column;
-    gap: 10px;
   }
   
-  .setting-row {
+  .setting-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 4px;
   }
-  .setting-row h2 {
+  .setting-section h2 {
     margin: 0;
     font-size: 16px;
     font-weight: 700 !important;
     color: var(--ink);
+  }
+  .setting-section p.desc {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--sub);
+    line-height: 1.5;
   }
 
   .setting-divider {
@@ -307,6 +315,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-bottom: 8px;
   }
   .sens-num{
     width: 48px;
@@ -328,6 +337,7 @@
   .sens-range-full{
     width: 100%;
     accent-color: var(--accent);
+    margin: 0;
   }
   .sens-labels{
     display: flex;
@@ -335,7 +345,7 @@
     font-size: 11px;
     font-weight: 400;
     color: var(--sub);
-    margin-top: -4px;
+    margin-top: -2px;
   }
 
   /* トグルスイッチ */
@@ -395,9 +405,13 @@
 </head>
 <body>
 
-<!-- 満点達成時のギミック用オーバーレイ -->
+<!-- 常時表示の虹色ライン -->
+<div class="permanent-rainbow-line">
+  <div class="rainbow-scroll-bg"></div>
+</div>
+
+<!-- 満点達成時の紙吹雪演出用オーバーレイ -->
 <div class="celebration-overlay" id="celebrationOverlay">
-  <div class="rainbow-bg" id="rainbowBg"></div>
   <div class="confetti-container" id="confettiContainer"></div>
 </div>
 
@@ -432,7 +446,7 @@
     <div class="modal-card">
       <!-- 設定 1: マイク感度 -->
       <div class="setting-section">
-        <div class="setting-row">
+        <div class="setting-header">
           <h2>マイク感度</h2>
           <div class="sens-control-group">
             <input type="number" id="sensNum" class="sens-num" min="1" max="100" value="50">
@@ -443,19 +457,24 @@
           <span>にぶい</span>
           <span>びんかん</span>
         </div>
+        <!-- 説明文を復活 -->
+        <p class="desc">数字が大きいほど、小さな音にも反応しやすくなります</p>
       </div>
 
       <div class="setting-divider"></div>
 
-      <!-- 設定 2: 紙吹雪・虹色演出 -->
+      <!-- 設定 2: 紙吹雪の演出（タイトル変更、説明文追加、デフォルトOFF） -->
       <div class="setting-section">
-        <div class="setting-row">
-          <h2>紙吹雪・虹色演出</h2>
+        <div class="setting-header">
+          <h2>紙吹雪の演出</h2>
           <label class="switch">
-            <input type="checkbox" id="confettiToggle" checked>
+            <!-- デフォルトOFF (checkedを削除) -->
+            <input type="checkbox" id="confettiToggle">
             <span class="slider"></span>
           </label>
         </div>
+        <!-- 説明文を追加 -->
+        <p class="desc">音が最大値の時に紙吹雪が表示されます</p>
       </div>
 
       <button class="modal-close" id="modalClose">とじる</button>
@@ -479,10 +498,10 @@
   const sensNum = document.getElementById('sensNum');
   const confettiToggle = document.getElementById('confettiToggle');
   
-  const rainbowBg = document.getElementById('rainbowBg');
   const confettiContainer = document.getElementById('confettiContainer');
 
-  let confettiEnabled = true;
+  // 紙吹雪演出の初期設定：OFF
+  let confettiEnabled = false;
 
   const minF = 80, maxF = 8000;
   const freqEdges = [];
@@ -569,7 +588,7 @@
   const FADE_MS = 800;
   const PEAK_UPDATE_MARGIN = 0.005;
 
-  /* --- 演出フェード制御 --- */
+  /* --- 紙吹雪演出フェード制御 --- */
   let fadeStartTimer = null;
   let fadeEndTimer = null;
   let lastConfettiTime = 0;
@@ -621,12 +640,12 @@
   }
 
   function triggerCelebration(){
+    // オンになっている場合のみ紙吹雪を発動
     if(!confettiEnabled) return;
 
     const now = Date.now();
 
-    // 演出発動：虹色と紙吹雪の透明度を上げて表示
-    rainbowBg.classList.add('active');
+    // 紙吹雪コンテナを表示
     confettiContainer.classList.remove('fading');
     
     // 紙吹雪を追加（1秒間隔）
@@ -641,11 +660,10 @@
 
     // 最後の発火から1.5秒後にフェードアウトを開始
     fadeStartTimer = setTimeout(()=>{
-      rainbowBg.classList.remove('active');
       confettiContainer.classList.add('fading');
     }, 1500);
 
-    // 最後の発火から2.5秒後に完全消滅（虹色のアニメーション自体は裏で動き続ける）
+    // 最後の発火から2.5秒後に完全消滅
     fadeEndTimer = setTimeout(()=>{
       confettiContainer.innerHTML = '';
       lastConfettiTime = 0;
@@ -704,6 +722,7 @@
 
       let onSegs = Math.round(level * SEGMENTS);
       
+      // どこかのバーが最大値に達したか判定
       if(onSegs >= SEGMENTS){
         reachedTop = true;
       }
@@ -752,6 +771,7 @@
       }
     }
 
+    // 最大値に達したら紙吹雪演出トリガー
     if(reachedTop){
       triggerCelebration();
     }
@@ -813,7 +833,6 @@
     smoothLevel.fill(0);
     if(fadeStartTimer) clearTimeout(fadeStartTimer);
     if(fadeEndTimer) clearTimeout(fadeEndTimer);
-    rainbowBg.classList.remove('active');
     confettiContainer.classList.add('fading');
     confettiContainer.innerHTML = '';
     lastConfettiTime = 0;
@@ -828,6 +847,7 @@
   function openModal(){
     sensRange.value = String(sensitivity);
     sensNum.value = String(sensitivity);
+    // スイッチの状態を反映
     confettiToggle.checked = confettiEnabled;
     modalOverlay.classList.add('open');
   }
