@@ -193,21 +193,21 @@
     right: 0;
     top: 0;
     height: 200vh;
-    /* 上端（0%）と下端（100%）を完璧に一致させチラつきを完全排除 */
+    /* 0%と100%を完全に同じ色にし、途中の色相差を均一にしてチラつきを防止 */
     background: linear-gradient(
       0deg,
       rgba(255, 71, 87, 0.55) 0%,
-      rgba(255, 165, 2, 0.55) 16.66%,
-      rgba(255, 234, 167, 0.55) 33.33%,
+      rgba(255, 165, 2, 0.55) 16.666%,
+      rgba(255, 234, 167, 0.55) 33.333%,
       rgba(46, 213, 115, 0.55) 50%,
-      rgba(30, 144, 255, 0.55) 66.66%,
-      rgba(155, 89, 182, 0.55) 83.33%,
+      rgba(30, 144, 255, 0.55) 66.666%,
+      rgba(155, 89, 182, 0.55) 83.333%,
       rgba(255, 71, 87, 0.55) 100%
     );
-    /* 常に裏でアニメーションを回し続けることで色の跳びを防止 */
     animation: moveUpBg 3s linear infinite;
     opacity: 0;
     transition: opacity 0.5s ease-out;
+    will-change: transform;
   }
   .rainbow-bg.active {
     opacity: 1;
@@ -276,7 +276,7 @@
     gap: 16px;
   }
 
-  /* モーダル内の各設定セクション（統一レイアウト） */
+  /* モーダル内の各設定セクション */
   .setting-section {
     display: flex;
     flex-direction: column;
@@ -376,6 +376,7 @@
     transform: translateX(22px);
   }
 
+  /* とじるボタンの上のマージンを20pxに調整 */
   .modal-close{
     width:100%;
     padding:12px;
@@ -387,7 +388,7 @@
     font-weight:500 !important;
     letter-spacing:1px;
     cursor:pointer;
-    margin-top: 4px;
+    margin-top: 20px;
   }
 </style>
 </head>
@@ -428,7 +429,7 @@
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-card">
-      <!-- 設定 1: マイク感度（横並びでシンプルに統一） -->
+      <!-- 設定 1: マイク感度 -->
       <div class="setting-section">
         <div class="setting-row">
           <h2>マイク感度</h2>
@@ -445,7 +446,7 @@
 
       <div class="setting-divider"></div>
 
-      <!-- 設定 2: 紙吹雪・虹色演出（同規格の横並びカード） -->
+      <!-- 設定 2: 紙吹雪・虹色演出 -->
       <div class="setting-section">
         <div class="setting-row">
           <h2>紙吹雪・虹色演出</h2>
@@ -623,7 +624,6 @@
 
     const now = Date.now();
 
-    // 虹色は透明度の変更（フェードイン）のみで表示。背景の回転自体は一切リセットしない
     rainbowBg.classList.add('active');
     confettiContainer.classList.remove('fading');
     
@@ -632,7 +632,6 @@
       lastConfettiTime = now;
     }
 
-    // 連続で呼ばれた場合はフェードアウトのタイマーだけを更新・延長する
     if(fadeStartTimer) clearTimeout(fadeStartTimer);
     if(fadeEndTimer) clearTimeout(fadeEndTimer);
 
