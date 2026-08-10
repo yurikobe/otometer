@@ -833,7 +833,7 @@
       if(err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError'){
         msg.textContent = 'マイクを許可（きょか）してね';
       } else if(err.name === 'NotFoundError'){
-        msg.textContent = 'マイクがみつからないよ';
+        msg.textContent = 'マイクが見つかりません';
       } else {
         msg.textContent = 'マイクをおこせなかったよ: ' + err.message;
       }
