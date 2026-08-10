@@ -58,7 +58,7 @@
   }
   .title h1 .oto{
     color:var(--accent);
-    font-weight:700 !important; /* 修正：おとの部分も確実に太字（700）を適用 */
+    font-weight:700 !important;
   }
 
   .card{
@@ -121,6 +121,7 @@
   .mic-btn svg{
     width:36px;
     height:36px;
+    display:block;
   }
 
   .ring{
@@ -157,8 +158,8 @@
     position:absolute;
     top:12px;
     right:12px;
-    width:32px;
-    height:32px;
+    width:36px;
+    height:36px;
     border-radius:50%;
     border:none;
     background:rgba(255,255,255,0.6);
@@ -167,10 +168,13 @@
     justify-content:center;
     cursor:pointer;
     z-index:10;
+    padding:0;
   }
   .settings-btn svg{
-    width:20px;
-    height:20px;
+    width:22px;
+    height:22px;
+    display:block;
+    flex-shrink:0;
   }
 
   .modal-overlay{
@@ -258,8 +262,8 @@
 
 <div class="phone">
   <button class="settings-btn" id="settingsBtn" aria-label="せってい">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="#8a7a6a" stroke-width="1.8"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="3.2" stroke="#8a7a6a" stroke-width="1.8"/>
       <path d="M19.4 13.5c.04-.33.06-.66.06-1s-.02-.67-.06-1l1.9-1.48a.5.5 0 0 0 .12-.64l-1.8-3.12a.5.5 0 0 0-.6-.22l-2.24.9c-.47-.36-.98-.66-1.53-.88l-.34-2.38a.5.5 0 0 0-.5-.43h-3.6a.5.5 0 0 0-.5.43l-.34 2.38c-.55.22-1.06.52-1.53.88l-2.24-.9a.5.5 0 0 0-.6.22l-1.8 3.12a.5.5 0 0 0 .12.64l1.9 1.48c-.04.33-.06.66-.06 1s.02.67.06 1l-1.9 1.48a.5.5 0 0 0-.12.64l1.8 3.12c.13.22.4.31.6.22l2.24-.9c.47.36.98.66 1.53.88l.34 2.38c.05.25.26.43.5.43h3.6c.24 0 .45-.18.5-.43l.34-2.38c.55-.22 1.06-.52 1.53-.88l2.24.9c.2.09.47 0 .6-.22l1.8-3.12a.5.5 0 0 0-.12-.64l-1.9-1.48Z" stroke="#8a7a6a" stroke-width="1.4" stroke-linejoin="round"/>
     </svg>
   </button>
@@ -275,7 +279,7 @@
   <div class="controls">
     <button class="mic-btn" id="micBtn" aria-label="マイクをはじめる">
       <div class="ring"></div>
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Z" fill="white"/>
         <path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V20H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.08A7 7 0 0 0 19 11Z" fill="white"/>
       </svg>
