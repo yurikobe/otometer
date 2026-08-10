@@ -16,6 +16,7 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{
     margin:0;
+    width:100%;
     height:100%;
     font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;
     background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
@@ -23,21 +24,26 @@
   }
   body{
     display:flex;
-    align-items:center;
-    justify-content:center;
+    align-items:stretch;
+    justify-content:flex-start;
   }
   .phone{
-    width:100vw;
-    height:100vh;
+    width:100%;
+    height:100%;
+    min-height:100dvh;
     display:flex;
     flex-direction:column;
-    padding:22px 18px 26px;
+    padding:
+      calc(env(safe-area-inset-top) + 18px)
+      18px
+      calc(env(safe-area-inset-bottom) + 18px);
     position:relative;
   }
 
   .title{
     text-align:center;
-    margin:6px 0 16px;
+    margin:4px 0 16px;
+    flex-shrink:0;
   }
   .title h1{
     margin:0;
@@ -384,6 +390,7 @@
   const peakTime = new Array(NUM_BARS).fill(0);   // そのピークに達した時刻
   const HOLD_MS = 800;  // ピークがその場にとどまる時間
   const FADE_MS = 800;  // その後ふわっと消えるまでの時間
+  const PEAK_UPDATE_MARGIN = 0.005; // これ以上高くなった時だけピークを更新
   const bandAvgBuf = new Array(NUM_BARS).fill(0);
 
   function bandAverage(b){
@@ -439,14 +446,21 @@
 
       let onSegs = Math.round(level * SEGMENTS);
 
-      // ピーク位置は時間ベースで管理（フレーム落ちがあってもチカチカしない）
-      // フェードが完了したら基準をリセットして、次の（前回より小さい）音のピークも拾えるようにする
+      // ピーク位置は時間ベースで管理。
+      // 同程度のレベルでは更新しないことで、保持中・フェード中のチラつきを防ぐ。
       const prevElapsed = now - peakTime[b];
       const prevFaded = prevElapsed > HOLD_MS + FADE_MS;
-      if(level >= peakLevel[b] || prevFaded){
+
+      if(prevFaded){
+        // 完全に消えた後は、次の音を新しいピークとして受け付ける。
+        peakLevel[b] = level;
+        peakTime[b] = now;
+      } else if(level > peakLevel[b] + PEAK_UPDATE_MARGIN){
+        // 現在のピークを明確に上回った時だけ更新する。
         peakLevel[b] = level;
         peakTime[b] = now;
       }
+
       const elapsed = now - peakTime[b];
       let peakOpacityVal;
       if(elapsed <= HOLD_MS){
@@ -456,7 +470,7 @@
       } else {
         peakOpacityVal = 0;
       }
-      const peakSeg = Math.round(peakLevel[b] * SEGMENTS) - 1;
+      const peakSeg = Math.floor(peakLevel[b] * SEGMENTS) - 1;
 
       const segs = segEls[b];
       for(let s=0;s<SEGMENTS;s++){
