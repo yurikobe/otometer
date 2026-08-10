@@ -14,14 +14,14 @@
     --bg-bottom:#ffe3d0;
     --card:#ffffff;
     --ink:#5a4a3f;
-    --sub:#a8998c;
+    --sub:#736356; /* 変更：#a8998c から視認性の高い濃い色へ */
     --accent:#ff8a5c;
   }
   *{
     box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;
     font-family: "M PLUS Rounded 1c", sans-serif !important;
-    font-weight: 400; /* デフォルトを 400 に設定 */
+    font-weight: 400;
   }
   html,body{
     margin:0;
@@ -48,7 +48,6 @@
     margin:10px;
     flex-shrink:0;
   }
-  /* タイトル：ウェイト 700 */
   .title h1{
     margin:0;
     font-size:24px;
@@ -122,26 +121,27 @@
     width:36px;
     height:36px;
   }
+
   .ring{
     position:absolute;
     top:50%;
     left:50%;
-    width:calc(100% + 12px);
-    height:calc(100% + 12px);
+    width:100%;
+    height:100%;
     transform:translate(-50%,-50%);
     border-radius:50%;
-    border:3px solid #ff5c4c;
+    border:2.5px solid #ff5c4c;
     opacity:0;
+    pointer-events:none;
   }
   .mic-btn.on .ring{
     animation:pulse 1.5s ease-out infinite;
   }
   @keyframes pulse{
-    0%{ opacity:0.6; transform:translate(-50%,-50%) scale(1); }
-    100%{ opacity:0; transform:translate(-50%,-50%) scale(1.35); }
+    0%{ opacity:0.8; transform:translate(-50%,-50%) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1.37); }
   }
 
-  /* メッセージエリア：ウェイト 400 */
   .msg{
     color:#e0724a;
     font-size:14px;
@@ -193,14 +193,12 @@
     max-width:320px;
     box-shadow:0 16px 40px rgba(0,0,0,0.25);
   }
-  /* マイク感度タイトル：ウェイト 700 */
   .modal-card h2{
     margin:0 0 4px;
     font-size:18px;
     font-weight:700 !important;
     color:var(--ink);
   }
-  /* 説明文：ウェイト 400 */
   .modal-card p.desc{
     margin:0 0 18px;
     font-size:14px;
@@ -211,7 +209,6 @@
     text-align:center;
     margin-bottom:8px;
   }
-  /* 感度数値：ウェイト 700 */
   .sens-num{
     width:90px;
     padding:2px 4px;
@@ -234,7 +231,6 @@
     margin-bottom:8px;
     accent-color:var(--accent);
   }
-  /* 端のラベル：ウェイト 400 */
   .sens-labels{
     display:flex;
     justify-content:space-between;
@@ -243,7 +239,6 @@
     color:var(--sub);
     margin-bottom:20px;
   }
-  /* 閉じるボタン：ウェイト 400 */
   .modal-close{
     width:100%;
     padding:12px;
