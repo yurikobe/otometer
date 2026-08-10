@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>おとメーター</title>
-<!-- M PLUS Rounded 1c (700) フォントの読み込み -->
+<!-- M PLUS Rounded 1c (400, 700) フォントの読み込み -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg-top:#fff6e9;
@@ -21,7 +21,7 @@
     box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;
     font-family: "M PLUS Rounded 1c", sans-serif !important;
-    font-weight: 700 !important;
+    font-weight: 400; /* デフォルトを 400 に設定 */
   }
   html,body{
     margin:0;
@@ -48,9 +48,11 @@
     margin:10px;
     flex-shrink:0;
   }
+  /* タイトル：ウェイト 700 */
   .title h1{
     margin:0;
     font-size:24px;
+    font-weight:700 !important;
     color:var(--ink);
     letter-spacing:1.6px;
     text-shadow:2px 2px 0 rgba(255,255,255,0.7);
@@ -139,10 +141,11 @@
     100%{ opacity:0; transform:translate(-50%,-50%) scale(1.35); }
   }
 
-  /* メッセージエリア：フォントサイズ12px -> 14px に変更 */
+  /* メッセージエリア：ウェイト 400 */
   .msg{
     color:#e0724a;
     font-size:14px;
+    font-weight:400;
     text-align:center;
   }
   .msg:empty{
@@ -190,26 +193,31 @@
     max-width:320px;
     box-shadow:0 16px 40px rgba(0,0,0,0.25);
   }
+  /* マイク感度タイトル：ウェイト 700 */
   .modal-card h2{
     margin:0 0 4px;
     font-size:18px;
+    font-weight:700 !important;
     color:var(--ink);
   }
-  /* 説明文：フォントサイズ12px -> 14px に変更 */
+  /* 説明文：ウェイト 400 */
   .modal-card p.desc{
     margin:0 0 18px;
     font-size:14px;
+    font-weight:400;
     color:var(--sub);
   }
   .sens-value-row{
     text-align:center;
     margin-bottom:8px;
   }
+  /* 感度数値：ウェイト 700 */
   .sens-num{
     width:90px;
     padding:2px 4px;
     text-align:center;
     font-size:34px;
+    font-weight:700 !important;
     color:var(--accent);
     border:none;
     background:transparent;
@@ -226,14 +234,16 @@
     margin-bottom:8px;
     accent-color:var(--accent);
   }
-  /* 端のラベル：フォントサイズ10px -> 14px に変更 */
+  /* 端のラベル：ウェイト 400 */
   .sens-labels{
     display:flex;
     justify-content:space-between;
     font-size:14px;
+    font-weight:400;
     color:var(--sub);
     margin-bottom:20px;
   }
+  /* 閉じるボタン：ウェイト 400 */
   .modal-close{
     width:100%;
     padding:12px;
@@ -242,6 +252,7 @@
     background:var(--accent);
     color:white;
     font-size:14px;
+    font-weight:400;
     letter-spacing:1px;
     cursor:pointer;
   }
